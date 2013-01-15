@@ -4,7 +4,7 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
 	<classpathentry kind="lib" path="lib/lucene-analyzers-common-4.0.0.jar"/>
 	<classpathentry kind="lib" path="lib/lucene-core-4.0.0.jar" sourcepath="Z:/apache-solr-4.0.0/lucene"/>
-	<classpathentry kind="lib" path="lib/apache-solr-core-4.0.0-fix.jar" sourcepath="Z:/apache-solr-4.0.0/solr/core/src/java"/>
+	<classpathentry kind="lib" path="lib/apache-solr-core-4.0.0-fix.jar" sourcepath="D:/workspace/apache-solr-4.0.0-src"/>
 	<classpathentry kind="lib" path="lib/lucene-queryparser-4.0.0.jar"/>
 	<classpathentry kind="lib" path="lib/apache-solr-solrj-4.0.0.jar" sourcepath="Z:/apache-solr-4.0.0-src"/>
 	<classpathentry kind="lib" path="lib/commons-io-2.1.jar"/>
