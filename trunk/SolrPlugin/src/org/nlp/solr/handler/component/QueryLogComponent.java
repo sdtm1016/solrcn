@@ -22,22 +22,15 @@ public class QueryLogComponent extends SearchComponent {
 	public static final int UNLIMITED_MAX_COUNT = -1;
 
 	@Override
-	public void process(ResponseBuilder rb) throws IOException {
-		SolrParams params = rb.req.getParams();
-
-		System.out.println("here:" + params.get("q"));
+	public void process(ResponseBuilder rb) throws IOException {		
+		System.out.println("process:" + rb.getQueryString());
 	}
 
 	@Override
 	public void prepare(ResponseBuilder rb) throws IOException {
-		// do nothing
-		System.out.println("prepare");
 		SolrQueryRequest req = rb.req;
 		SolrParams params = req.getParams();
-		// if (!params.getBool(COMPONENT_NAME, true)) {
-		// return;
-		// }
-		System.out.println("prepare_doing");
+
 		String queryString = rb.getQueryString();
 		if (queryString == null) {
 			// this is the normal way it's set.
