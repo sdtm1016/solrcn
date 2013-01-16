@@ -11,9 +11,12 @@ import java.io.OutputStreamWriter;
 import java.io.RandomAccessFile;
 
 import org.apache.solr.common.params.CommonParams;
+import org.apache.solr.common.params.ShardParams;
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.handler.component.ResponseBuilder;
 import org.apache.solr.handler.component.SearchComponent;
+import org.apache.solr.request.SolrQueryRequest;
+import org.apache.solr.response.SolrQueryResponse;
 
 /**
  * 
@@ -23,7 +26,7 @@ import org.apache.solr.handler.component.SearchComponent;
 public class QueryLogComponent extends SearchComponent {
 
 	public static final String COMPONENT_NAME = "QueryLog";
-	public static final String LogFile = "QueryLog.log";
+	public static final String LogFileName = "QueryLog.log";
 
 	
 	 /** 
@@ -32,12 +35,15 @@ public class QueryLogComponent extends SearchComponent {
      * @param fileName 
      * @param content 
      */  
-    public static void method1(String file, String conent) {  
+    public static void method1(String fileName, String content) {
+    	if (fileName == null || content == null){
+    		return;
+    	}
         BufferedWriter out = null;  
         try {  
             out = new BufferedWriter(new OutputStreamWriter(  
-                    new FileOutputStream(file, true)));  
-            out.write(conent);  
+                    new FileOutputStream(fileName, true)));  
+            out.write(content);  
         } catch (Exception e) {  
             e.printStackTrace();  
         } finally {  
@@ -57,6 +63,9 @@ public class QueryLogComponent extends SearchComponent {
      * @param content 
      */  
     public static void method2(String fileName, String content) {  
+    	if (fileName == null || content == null){
+    		return;
+    	}
         try {  
             // 打开一个写文件器，构造函数中的第二个参数true表示以追加形式写文件  
             FileWriter writer = new FileWriter(fileName, true);  
@@ -76,6 +85,9 @@ public class QueryLogComponent extends SearchComponent {
      *            追加的内容 
      */  
     public static void method3(String fileName, String content) {  
+    	if (fileName == null || content == null){
+    		return;
+    	}    	
         try {  
             // 打开一个随机访问文件流，按读写方式  
             RandomAccessFile randomFile = new RandomAccessFile(fileName, "rw");  
@@ -92,24 +104,48 @@ public class QueryLogComponent extends SearchComponent {
 
 	@Override
 	public void process(ResponseBuilder rb) throws IOException {
-		// do nothing
 	}
 
 	@Override
 	public void prepare(ResponseBuilder rb) throws IOException {
-
+	    SolrQueryRequest req = rb.req;
+//	    SolrQueryResponse rsp = rb.rsp;
+	    SolrParams params = req.getParams();
+	    if (!params.getBool(COMPONENT_NAME, true)) {
+	        return;
+	      }
+	    
+	    if (params.get(ShardParams.IS_SHARD) != null && params.get(ShardParams.IS_SHARD).equals("true")){
+	    	return;
+	    }
+	    
 		String queryString = rb.getQueryString();
-		if (queryString == null) {
-			// this is the normal way it's set.
-			SolrParams params = rb.req.getParams();
-			queryString = params.get(CommonParams.Q);
-			System.out.println(queryString);
-		} else {			
-			System.out.println(queryString);
+		
+		if (queryString == null) {			
+			queryString = params.get(CommonParams.Q);									
 		}
-		method1("method1_"+LogFile,queryString+"\r");
-		method2("method2_"+LogFile,queryString+"\r");
-		method3("method3_"+LogFile,queryString+"\r");
+		
+		if (queryString != null){
+			//分离指定字段和关键字 term:keyword -> keyword
+			String[] queryTermList = queryString.split(":");
+			if (queryTermList.length < 2 && queryString != null){
+				method1("method1_"+LogFileName,queryString+" 1\r");
+				method2("method2_"+LogFileName,queryString+" 1\r");
+				return;
+			}
+			
+			
+			//分离多关键字 keyword1 keyword2 -> keyword1,keyword2
+			for (int i = 1; i <= queryTermList.length; i = i + 2) {				
+				String[] queryTerm = queryTermList[i].split(" ");
+				for (int j = 0; j < queryTerm.length; j++) {
+					//测试两种不同的记录方式
+					method1("method1_"+LogFileName,queryTerm[j]+" 1\r");
+					method2("method2_"+LogFileName,queryTerm[j]+" 1\r");								
+				}
+			}
+		}				
+					      	
 	}
 
 	@Override

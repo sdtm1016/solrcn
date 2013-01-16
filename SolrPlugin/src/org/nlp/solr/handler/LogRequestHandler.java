@@ -10,6 +10,7 @@ public class LogRequestHandler extends StandardRequestHandler {
 	@Override
 	public void handleRequestBody(SolrQueryRequest request, SolrQueryResponse response)
 			throws Exception {
+		super.handleRequestBody(request, response);
 		//System.out.println("handleRequestBody");
 //		Dictionary.getInstance().loadDbExDict();	
 		SolrParams params = request.getParams();
