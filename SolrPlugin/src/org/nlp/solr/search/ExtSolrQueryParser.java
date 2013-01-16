@@ -43,10 +43,9 @@ public class ExtSolrQueryParser extends SolrQueryParser {
 				try {
 					//System.out.println(queryText);
 					//此字段的分词器
-					Analyzer analyzer = ft.getQueryAnalyzer() == null ? ft.getAnalyzer() : ft.getQueryAnalyzer();
-					if(analyzer != null) {
+					if((ft.getQueryAnalyzer() == null ? ft.getAnalyzer() : ft.getQueryAnalyzer()) != null) {
 						BooleanQuery bq = new BooleanQuery();//(true);
-						TokenStream ts = analyzer.tokenStream(field, new StringReader(queryText));
+						TokenStream ts = (ft.getQueryAnalyzer() == null ? ft.getAnalyzer() : ft.getQueryAnalyzer()).tokenStream(field, new StringReader(queryText));
 						//StringBuilder sb = new StringBuilder();
 						int endOffset = 0;
 						while(ts.incrementToken()) {

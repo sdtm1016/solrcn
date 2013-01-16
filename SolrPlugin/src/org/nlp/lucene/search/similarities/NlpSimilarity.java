@@ -3,8 +3,6 @@ package org.nlp.lucene.search.similarities;
 import org.apache.lucene.search.similarities.DefaultSimilarity;
 
 public class NlpSimilarity extends DefaultSimilarity {
-	private static final long serialVersionUID = 3068456854655826468L;
-
 	@Override
 	public float idf(long docFreq, long numDocs) {
 		return 1.0F;
