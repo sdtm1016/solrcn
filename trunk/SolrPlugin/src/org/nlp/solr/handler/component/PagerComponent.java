@@ -8,7 +8,7 @@
  * Web		: http://devel.dob.sk/solr_pager
  * Requirements	: JAVA 1.5, SOLR 1.4, ANT
  */
-package org.nlp.solr.search.handler.component;
+package org.nlp.solr.handler.component;
 
 /* solr imports */
 import java.io.IOException;
