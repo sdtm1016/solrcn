@@ -1,0 +1,13 @@
+*.class
+# Package Files #
+*.war
+*.ear
+.settings/
+/.classpath
+/.project
+/bin
+.DS_Store
+Copy of userLibrary.dic
+.data/
+data/
+org/ansj/training/
