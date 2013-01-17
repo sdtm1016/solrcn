@@ -16,7 +16,6 @@ import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.handler.component.ResponseBuilder;
 import org.apache.solr.handler.component.SearchComponent;
 import org.apache.solr.request.SolrQueryRequest;
-import org.apache.solr.response.SolrQueryResponse;
 
 /**
  * 
@@ -108,7 +107,7 @@ public class QueryLogComponent extends SearchComponent {
 
 	@Override
 	public void prepare(ResponseBuilder rb) throws IOException {
-	    SolrQueryRequest req = rb.req;
+	    SolrQueryRequest req = rb.req;	    
 //	    SolrQueryResponse rsp = rb.rsp;
 	    SolrParams params = req.getParams();
 	    if (!params.getBool(COMPONENT_NAME, true)) {
@@ -121,30 +120,35 @@ public class QueryLogComponent extends SearchComponent {
 	    
 		String queryString = rb.getQueryString();
 		
-		if (queryString == null) {			
-			queryString = params.get(CommonParams.Q);									
+		if (queryString == null) {
+			queryString = params.get(CommonParams.Q);
 		}
-		
-		if (queryString != null){
-			//分离指定字段和关键字 term:keyword -> keyword
+
+		String[] queryTerm;
+		if (queryString != null) {
+			// 分离指定字段和关键字 term:keyword -> keyword
 			String[] queryTermList = queryString.split(":");
-			if (queryTermList.length < 2 && queryString != null){
-				method1("method1_"+LogFileName,queryString+" 1\r");
-				method2("method2_"+LogFileName,queryString+" 1\r");
-				return;
-			}
-			
-			
-			//分离多关键字 keyword1 keyword2 -> keyword1,keyword2
-			for (int i = 1; i <= queryTermList.length; i = i + 2) {				
-				String[] queryTerm = queryTermList[i].split(" ");
+			if (queryTermList.length < 2) {
+				// 分离多关键字 keyword1 keyword2 -> keyword1,keyword2
+				queryTerm = queryTermList[0].split(" ");
 				for (int j = 0; j < queryTerm.length; j++) {
-					//测试两种不同的记录方式
-					method1("method1_"+LogFileName,queryTerm[j]+" 1\r");
-					method2("method2_"+LogFileName,queryTerm[j]+" 1\r");								
+					// 测试两种不同的记录方式
+					method1("method1_" + LogFileName, queryTerm[j] + " 1\r");
+					method2("method2_" + LogFileName, queryTerm[j] + " 1\r");
+				}												
+			} else {				
+				for (int i = 1; i <= queryTermList.length; i = i + 2) {
+					// 分离多关键字 keyword1 keyword2 -> keyword1,keyword2
+					queryTerm = queryTermList[i].split(" ");
+					for (int j = 0; j < queryTerm.length; j++) {
+						// 测试两种不同的记录方式
+						method1("method1_" + LogFileName, queryTerm[j] + " 1\r");
+						method2("method2_" + LogFileName, queryTerm[j] + " 1\r");
+					}
 				}
 			}
-		}				
+
+		}			
 					      	
 	}
 
