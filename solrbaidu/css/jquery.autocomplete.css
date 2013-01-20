@@ -1,0 +1,44 @@
+@CHARSET "UTF-8";
+.ac_results {
+	
+	padding: 2px;
+	border: 1px solid #7E7E7E;
+	background-color: white;
+	overflow: hidden;
+	z-index: 99999;
+}
+
+.ac_results ul {
+	text-align:left;
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+.ac_results li {
+	list-style:none;
+	margin: 0px;
+	padding: 3px 10px;
+	cursor: default;
+	font-size: 14px;
+	/* 
+	it is very important, if line-height not setted or setted 
+	in relative units scroll will be broken in firefox
+	*/
+	
+	overflow: hidden;
+}
+
+.ac_loading {
+	background: #FFFFFF; /*单数行颜色*/
+}
+
+.ac_odd {
+	background-color: #FFFFFF; /*偶数行颜色*/
+}
+
+.ac_over {
+	background-color: #EBEBEB;
+	color: #000000;
+}
+

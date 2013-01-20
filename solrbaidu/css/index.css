@@ -1,0 +1,20 @@
+@CHARSET "UTF-8";
+ body{font:12px arial;text-align:center; background:#fff}
+ body,p,form,ul{margin:0; padding:0}
+ body,form,#fm{position:relative}
+ td{text-align:left}
+ img{border:0}
+ a{color:#00c}
+ a:active{color:#f60}
+ #u{padding:7px 10px 3px 0;text-align:right}
+ #m{width:680px;margin:0 auto}
+ #fm{padding-left:90px;text-align:left}
+ #cp, #cp a {color: #7777CC;}
+ #lm {height: 80px;}
+ #kw{width:404px;height:22px;padding:4px 7px;padding:6px 7px 2px\9;font:16px arial;background:url(../image/i2.png) no-repeat;_background-attachment:fixed;border:1px solid #cdcdcd;border-color:#9a9a9a #cdcdcd #cdcdcd #9a9a9a;vertical-align:top}
+.btn{font-size:14px}
+ .btn{width:95px;height:32px;padding:0;padding-top:2px\9;border:0;background:#ddd url(../image/i2.png) 0 -35px;cursor:pointer}
+ .btn_h{background-position:-100px -35px}#kw,.btn_wr{margin:0 5px 0 0}
+ .btn_wr{width:97px;height:34px;display:inline-block;background:url(../image/i2.png) no-repeat -202px bottom;_padding-top:1px;*position:relative}
+ 
+ 
