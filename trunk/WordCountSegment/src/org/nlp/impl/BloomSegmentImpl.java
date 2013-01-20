@@ -14,14 +14,19 @@ public class BloomSegmentImpl {
 	static Bloom bloom;
 	static String defaultModel = "model";
 	
-	BloomSegmentImpl(){
+	public BloomSegmentImpl(){
 		this(defaultModel);
 	}
 	
 	BloomSegmentImpl(String model) {
-		if (bloom == null)
-			bloom = new Bloom("model");
+		initDic(model);
 	}
+
+	public static void initDic(String filePath) {		
+		if (bloom == null) {			
+			bloom = new Bloom(filePath);
+		}
+	}	
 	
 	public static List<String> getListTokens(String text){		
 		StringBuffer NewWord = new StringBuffer();
@@ -71,13 +76,32 @@ public class BloomSegmentImpl {
 		return result;
 	}
 	
-	//分词
+	
+	/**
+	 * 基本分词,返回字典里存在的词
+	 * @param text
+	 * @return
+	 */
+	public static List<String> getBaseList(String text){
+		List<String> result = new ArrayList<String>();
+		for (TokendWords word : getBaseTokens(text)){
+			result.add(word.getWord());
+		}
+		return result;
+	}	
+	
+	
+	/**
+	 * 基本分词,返回字典里存在的词
+	 * @param text
+	 * @return
+	 */
 	public static List<TokendWords> getBaseTokens(String text){
 		List<TokendWords> result = new ArrayList<TokendWords>();
 
 		int start = 0;
 		int pos = 0;
-		BitSet bitSet = new BitSet(text.length());
+//		BitSet bitSet = new BitSet(text.length());
 		int minGramSize = 2;
 		int maxGramSize = 5;
 		
@@ -92,14 +116,32 @@ public class BloomSegmentImpl {
 					start = i;
 					//当前切割的词语:text.substring(i, i + gramSize)
 					result.add(new TokendWords(text.substring(i, i + gramSize), 1l,new String[] { "Word" }, gramSize, pos, start));
-					bitSet.set(i, i + gramSize);
+//					bitSet.set(i, i + gramSize);
 					pos++;
 				}
 			}		
 		}				
 		return result;		
 	}
+
 	
+	/**
+	 * 基本分词,返回字典里存在的词
+	 * @param text
+	 * @return
+	 */
+	public static List<String> getNewList(String text){
+		List<String> result = new ArrayList<String>();
+		for (TokendWords word : getNewTokens(text)){
+			result.add(word.getWord());
+		}
+		return result;
+	}	
+	
+	/**
+	 * @param text
+	 * @return
+	 */
 	public static List<TokendWords> getNewTokens(String text){
 		List<TokendWords> result = new ArrayList<TokendWords>();
 		StringBuffer NewWord = new StringBuffer();
@@ -216,6 +258,7 @@ public class BloomSegmentImpl {
 	public static void main(String[] args) {
 		String s = "张一凡的电话13699191946,在上海市浦东新区耀华路99弄16号10402,上海市徐汇区东新路99弄38号402";
 		BloomSegmentImpl bloomSegmentImpl = new BloomSegmentImpl();
-		System.out.println(bloomSegmentImpl.getListTokens(s));
+		System.out.println(bloomSegmentImpl.getBaseList(s));
+		System.out.println(bloomSegmentImpl.getNewList(s));
 	}
 }

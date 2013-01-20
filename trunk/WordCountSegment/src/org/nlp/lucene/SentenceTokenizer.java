@@ -1,21 +1,4 @@
 package org.nlp.lucene;
-/*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 
 
 import java.io.IOException;
@@ -39,7 +22,9 @@ public final class SentenceTokenizer extends Tokenizer {
   /**
    * End of sentence punctuation: 。，！？�?!?;
    */
-  private final static String PUNCTION = "。，！？�?!?;";
+  private final static String PUNCTION = "。，！？；,!?;";
+  
+  private final static String SPACES = " 　\t\r\n";
 
   private final StringBuilder buffer = new StringBuilder();
 
@@ -48,7 +33,7 @@ public final class SentenceTokenizer extends Tokenizer {
   private final CharTermAttribute termAtt = addAttribute(CharTermAttribute.class);
   private final OffsetAttribute offsetAtt = addAttribute(OffsetAttribute.class);
   private final TypeAttribute typeAtt = addAttribute(TypeAttribute.class);
-
+      
   public SentenceTokenizer(Reader reader) {
     super(reader);
   }
@@ -76,11 +61,11 @@ public final class SentenceTokenizer extends Tokenizer {
       if (ci == -1) {
         break;
       } else if (PUNCTION.indexOf(ch) != -1) {
-        // End of a sentence
-        buffer.append(ch);
-        tokenEnd++;
+        // End of a sentence 句尾的不要标点符号
+//        buffer.append(ch);
+//        tokenEnd++;
         break;
-      } else if (atBegin && Utility.SPACES.indexOf(ch) != -1) {
+      } else if (atBegin && SPACES.indexOf(ch) != -1) {
         tokenStart++;
         tokenEnd++;
         ci = input.read();
@@ -93,8 +78,8 @@ public final class SentenceTokenizer extends Tokenizer {
         ci = input.read();
         ch = (char) ci;
         // Two spaces, such as CR, LF
-        if (Utility.SPACES.indexOf(ch) != -1
-            && Utility.SPACES.indexOf(pch) != -1) {
+        if (SPACES.indexOf(ch) != -1
+            && SPACES.indexOf(pch) != -1) {
           // buffer.append(ch);
           tokenEnd++;
           break;
@@ -103,10 +88,10 @@ public final class SentenceTokenizer extends Tokenizer {
     }
     if (buffer.length() == 0)
       return false;
-    else {
+    else {           
       termAtt.setEmpty().append(buffer);
       offsetAtt.setOffset(correctOffset(tokenStart), correctOffset(tokenEnd));
-      typeAtt.setType("sentence");
+      typeAtt.setType("word");
       return true;
     }
   }
