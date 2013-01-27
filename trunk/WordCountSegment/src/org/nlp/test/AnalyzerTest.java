@@ -5,6 +5,7 @@ import java.io.Reader;
 import java.io.StringReader;
 
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+import org.nlp.lucene.BloomSegmentNewTokensFilter;
 import org.nlp.lucene.SentenceTokenizer;
 
 
@@ -12,7 +13,7 @@ public class AnalyzerTest {
 
 	public static void main(String[] args) throws IOException {
 		// text to tokenize
-		final String text = "中华人民共和国,上海市徐汇区东新路99弄38号402";
+		final String text = "中华人民共和国,上海市徐汇区东新路99弄38号402,中华人民共和国,电话13810000000邮编100044";
 		// "上海市徐汇区东新路99弄38号402";
 		// "上海市浦东新区耀华路99弄16号10402";
 		Reader reader = new StringReader(text);
@@ -47,7 +48,10 @@ public class AnalyzerTest {
 		CharTermAttribute termAtt = bloomSegmentTokenizer
 				.addAttribute(CharTermAttribute.class);
 		
-		while(bloomSegmentTokenizer.incrementToken()){
+		BloomSegmentNewTokensFilter bloomSegmentFilter = new BloomSegmentNewTokensFilter(bloomSegmentTokenizer);
+		CharTermAttribute addAttribute = bloomSegmentFilter.addAttribute(CharTermAttribute.class);
+		
+		while(bloomSegmentFilter.incrementToken()){
 		System.out.println(termAtt.toString());
 			
 		}
