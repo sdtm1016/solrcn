@@ -25,12 +25,12 @@ public class BloomSegmentFilter extends TokenFilter {
 	private List<TokendWords> tokenBuffer;
 	private Iterator<TokendWords> tokenIter;
 
-	protected BloomSegmentFilter(TokenStream input) {
+	public BloomSegmentFilter(TokenStream input) {
 		super(input);
-//		TokenImpl.initDic("SogouLabDic.dic");
 		wordSegmenter = new BloomSegmentImpl();
 	}
-
+	
+	@SuppressWarnings("static-access")
 	@Override
 	public boolean incrementToken() throws IOException {
 

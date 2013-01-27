@@ -91,7 +91,7 @@ public final class SentenceTokenizer extends Tokenizer {
     else {           
       termAtt.setEmpty().append(buffer);
       offsetAtt.setOffset(correctOffset(tokenStart), correctOffset(tokenEnd));
-      typeAtt.setType("word");
+      typeAtt.setType("Sentence");
       return true;
     }
   }

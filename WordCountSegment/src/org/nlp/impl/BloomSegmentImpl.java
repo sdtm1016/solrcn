@@ -257,6 +257,7 @@ public class BloomSegmentImpl {
 	
 	public static void main(String[] args) {
 		String s = "张一凡的电话13699191946,在上海市浦东新区耀华路99弄16号10402,上海市徐汇区东新路99弄38号402";
+		s = "中华人民共和国,电话13810000000邮编100044";
 		BloomSegmentImpl bloomSegmentImpl = new BloomSegmentImpl();
 		System.out.println(bloomSegmentImpl.getBaseList(s));
 		System.out.println(bloomSegmentImpl.getNewList(s));
