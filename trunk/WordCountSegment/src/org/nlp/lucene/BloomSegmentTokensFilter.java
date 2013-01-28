@@ -24,10 +24,17 @@ public class BloomSegmentTokensFilter extends TokenFilter {
 	private BloomSegmentImpl wordSegmenter;
 	private List<TokendWords> tokenBuffer;
 	private Iterator<TokendWords> tokenIter;
+	private int mode = 0;
 
 	public BloomSegmentTokensFilter(TokenStream input) {
 		super(input);
 		wordSegmenter = new BloomSegmentImpl();
+	}
+	
+	public BloomSegmentTokensFilter(TokenStream input,int mode) {
+		super(input);
+		wordSegmenter = new BloomSegmentImpl();
+		this.mode = mode;
 	}
 	
 	@SuppressWarnings("static-access")
@@ -39,7 +46,7 @@ public class BloomSegmentTokensFilter extends TokenFilter {
 				tokStart = offsetAtt.startOffset();
 				tokEnd = offsetAtt.endOffset();
 				hasIllegalOffsets = (tokStart + termAtt.length()) != tokEnd;				
-				tokenBuffer = wordSegmenter.getTokens(termAtt.toString());				
+				tokenBuffer = wordSegmenter.getTokens(termAtt.toString(),mode);				
 				tokenIter = tokenBuffer.iterator();
 				if (!tokenIter.hasNext())
 					return false;

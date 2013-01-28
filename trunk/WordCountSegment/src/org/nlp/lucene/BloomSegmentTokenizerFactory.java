@@ -1,26 +1,19 @@
 package org.nlp.lucene;
 
 import java.io.IOException;
-import java.util.Map;
+import java.io.Reader;
 
-import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.util.ResourceLoader;
 import org.apache.lucene.analysis.util.ResourceLoaderAware;
-import org.apache.lucene.analysis.util.TokenFilterFactory;
+import org.apache.lucene.analysis.util.TokenizerFactory;
 import org.nlp.impl.BloomSegmentImpl;
 
-public class BloomSegmentFilterFactory extends TokenFilterFactory implements
+public class BloomSegmentTokenizerFactory extends TokenizerFactory implements
 		ResourceLoaderAware {
-
 	String modelFile = "model";
 	int mode = 0;
-
-	@Override
-	public void init(Map<String, String> args) {
-		super.init(args);
-		assureMatchVersion();
-	}
-
+	
 	@Override
 	public void inform(ResourceLoader loader) throws IOException {
 		String modelFile = args.get("words");
@@ -36,9 +29,12 @@ public class BloomSegmentFilterFactory extends TokenFilterFactory implements
 		}
 		
 		BloomSegmentImpl.initDic(modelFile);
+		
+	}
+
+	@Override
+	public Tokenizer create(Reader in) {
+		return new BloomSegmentTokenizer(in, mode);
 	}
 	
-	public TokenStream create(TokenStream input) {
-			return new BloomSegmentFilter(input,mode);
-	}
 }

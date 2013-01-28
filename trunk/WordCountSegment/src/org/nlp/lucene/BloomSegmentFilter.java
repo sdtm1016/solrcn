@@ -25,10 +25,32 @@ public class BloomSegmentFilter extends TokenFilter {
 	private List<TokendWords> tokenBuffer;
 	private Iterator<TokendWords> tokenIter;
 
+	private int mode = 0;
+	String modelFile = "model";
+	
 	public BloomSegmentFilter(TokenStream input) {
 		super(input);
-		wordSegmenter = new BloomSegmentImpl();
+		init();
 	}
+	
+	public BloomSegmentFilter(TokenStream input,int mode) {
+		super(input);		
+		this.mode = mode;
+		init();
+	}
+	
+	public BloomSegmentFilter(TokenStream input,int mode, String modelFile) {
+		super(input);		
+		this.mode = mode;
+		this.modelFile = modelFile;
+		init();
+	}
+	
+	private void init(){
+		wordSegmenter = new BloomSegmentImpl();
+		BloomSegmentImpl.initDic(modelFile);
+	}
+	
 	
 	@SuppressWarnings("static-access")
 	@Override
@@ -39,7 +61,7 @@ public class BloomSegmentFilter extends TokenFilter {
 				tokStart = offsetAtt.startOffset();
 				tokEnd = offsetAtt.endOffset();
 				hasIllegalOffsets = (tokStart + termAtt.length()) != tokEnd;				
-				tokenBuffer = wordSegmenter.getTokens(termAtt.toString());				
+				tokenBuffer = wordSegmenter.getTokens(termAtt.toString(),mode);				
 				tokenIter = tokenBuffer.iterator();
 				if (!tokenIter.hasNext())
 					return false;

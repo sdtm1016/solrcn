@@ -12,71 +12,40 @@ import org.nlp.algo.Bloom;
  */
 public class BloomSegmentImpl {
 	static Bloom bloom;
-	static String defaultModel = "model";
+	static String defaultModel = "model";		
+	private final static String punctuation = "[。，！？；,!?;]";	
 	
 	public BloomSegmentImpl(){
 		this(defaultModel);
 	}
 	
-	BloomSegmentImpl(String model) {
-		initDic(model);
+	BloomSegmentImpl(String filePath) {
+		initDic(filePath);
 	}
-
+		
+	public static void initDic(){
+		initDic(defaultModel);
+	}
+	
 	public static void initDic(String filePath) {		
 		if (bloom == null) {			
 			bloom = new Bloom(filePath);
 		}
-	}	
+	}		
 	
-	public static List<String> getListTokens(String text){		
-		StringBuffer NewWord = new StringBuffer();
-		List<String> Tonkens = new ArrayList<String>();
-		List<String> NewTonkens = new ArrayList<String>();
+	/**
+	 * 全分词,返回字典里存在的词和新词
+	 * @param text
+	 * @return
+	 */
+	public static List<String> getTokensList(String text){		
 		List<String> result = new ArrayList<String>();
-		int lastOffset = 0;
-				
-		BitSet bitSet = new BitSet(text.length());
-		int minGramSize = 2;
-		int maxGramSize = 5;
-		
-		int length = text.length();
-		
-		//进行minGramSize到maxGramSize元切词
-		for (int gramSize = minGramSize; gramSize <= maxGramSize; gramSize++) {
-			//第gramSize元切词
-			for (int i = 0; i <= length - gramSize; i++) {
-				//用bloom过滤器保留在词典里的词
-				if (bloom.contains(text.substring(i, i + gramSize))) {
-					Tonkens.add(text.substring(i, i + gramSize));
-					bitSet.set(i, i + gramSize);
-				}
-			}		
-		}		
-		
-		//新词识别
-		for (int i = 0; i < text.length(); i++) {
-			if (!bitSet.get(i)) {
-
-				if ((NewWord.length() == 0) || (i - lastOffset) < 2) {
-					NewWord.append(text.charAt(i));
-				} else {
-					NewTonkens.add(NewWord.toString());
-					NewWord.delete(0, NewWord.length());
-					NewWord.append(text.charAt(i));
-				}
-				lastOffset = i;
-			}
-			if (i == text.length()-1 && NewWord.length() > 0) {
-				NewTonkens.add(NewWord.toString());
-			}
-		}	
-		
-		result.addAll(Tonkens);
-		result.addAll(NewTonkens);
+		for (TokendWords word : getTokens(text,0)){
+			result.add(word.getWord());
+		}
 		return result;
 	}
-	
-	
+		
 	/**
 	 * 基本分词,返回字典里存在的词
 	 * @param text
@@ -84,47 +53,12 @@ public class BloomSegmentImpl {
 	 */
 	public static List<String> getBaseList(String text){
 		List<String> result = new ArrayList<String>();
-		for (TokendWords word : getBaseTokens(text)){
+		for (TokendWords word : getTokens(text,1)){
 			result.add(word.getWord());
 		}
 		return result;
 	}	
-	
-	
-	/**
-	 * 基本分词,返回字典里存在的词
-	 * @param text
-	 * @return
-	 */
-	public static List<TokendWords> getBaseTokens(String text){
-		List<TokendWords> result = new ArrayList<TokendWords>();
-
-		int start = 0;
-		int pos = 0;
-//		BitSet bitSet = new BitSet(text.length());
-		int minGramSize = 2;
-		int maxGramSize = 5;
-		
-		int length = text.length();
-		
-		//进行minGramSize到maxGramSize元切词
-		for (int gramSize = minGramSize; gramSize <= maxGramSize; gramSize++) {
-			//第gramSize元切词
-			for (int i = 0; i <= length - gramSize; i++) {
-				//用bloom过滤器保留在词典里的词
-				if (bloom.contains(text.substring(i, i + gramSize))) {
-					start = i;
-					//当前切割的词语:text.substring(i, i + gramSize)
-					result.add(new TokendWords(text.substring(i, i + gramSize), 1l,new String[] { "Word" }, gramSize, pos, start));
-//					bitSet.set(i, i + gramSize);
-					pos++;
-				}
-			}		
-		}				
-		return result;		
-	}
-
-	
+				
 	/**
 	 * 基本分词,返回字典里存在的词
 	 * @param text
@@ -132,100 +66,58 @@ public class BloomSegmentImpl {
 	 */
 	public static List<String> getNewList(String text){
 		List<String> result = new ArrayList<String>();
-		for (TokendWords word : getNewTokens(text)){
+		for (TokendWords word : getTokens(text,2)){
 			result.add(word.getWord());
 		}
 		return result;
 	}	
+			
 	
 	/**
 	 * @param text
+	 * @param mode //0 全部词语 1基本词语 2新词识别
 	 * @return
 	 */
-	public static List<TokendWords> getNewTokens(String text){
+	public static List<TokendWords> getTokens(String text,int mode){
 		List<TokendWords> result = new ArrayList<TokendWords>();
 		StringBuffer NewWord = new StringBuffer();
-		
+				
 		int lastOffset = 0;
 		int start = 0;
 		int pos = 0;
-		BitSet bitSet = new BitSet(text.length());
+		BitSet bitSet = new BitSet(text.length()+1);
 		int minGramSize = 2;
 		int maxGramSize = 5;
 		
-		int length = text.length();
-		
+		int length = 0;
+		String[] split = text.split(punctuation); //把文本切割成句子
+		for (int i = 0; i < split.length; i++) {					
+			length = split[i].length();				
 		//进行minGramSize到maxGramSize元切词
 		for (int gramSize = minGramSize; gramSize <= maxGramSize; gramSize++) {
 			//第gramSize元切词
-			for (int i = 0; i <= length - gramSize; i++) {
+			for (int n = 0; n <= length - gramSize; n++) {
 				//用bloom过滤器保留在词典里的词
-				if (bloom.contains(text.substring(i, i + gramSize))) {
-//					start = i;
+				if (bloom.contains(split[i].substring(n, n + gramSize))) {
 					//当前切割的词语:text.substring(i, i + gramSize)
-//					result.add(new TokendWords(text.substring(i, i + gramSize), 1l,new String[] { "Word" }, gramSize, pos, start));
-					bitSet.set(i, i + gramSize);
-//					pos++;
+					if (mode != 2){
+						result.add(new TokendWords(split[i].substring(n, n + gramSize), 1l,new String[] { "Word" }, gramSize, pos, start));
+						pos++;
+					}
+					if (mode != 1){
+						bitSet.set((start + n), (start + n + gramSize));	
+					}					
+					
 				}
 			}		
 		}		
+		bitSet.set(start+split[i].length());
+		start = start + length + 1;
+			
+		}
 		
-		//新词识别
-		for (int i = 0; i < text.length(); i++) {
-			if (!bitSet.get(i)) {//判断当前字附是否已经作为已识别词语
-				//如果新词缓存长度为0认为是新词的第一个字
-				if (NewWord.length() == 0) {
-					start = i;
-					NewWord.append(text.charAt(i));
-					//设置新词开始位置					
-				} else if ((i - lastOffset) == 1) { //当前位置和上一个字符偏移量为1则添加到新词缓冲区
-					NewWord.append(text.charAt(i));
-				} else {// 偏移量不等于1,说明上一个词已经结束,记录新词,并开始新一轮新词记录					
-					result.add(new TokendWords(NewWord.toString(), 1l,new String[] { "NewWord" }, NewWord.length(), pos, start));
-					pos++;					
-					NewWord.delete(0, NewWord.length());
-					start = i;
-					NewWord.append(text.charAt(i));
-				}
-				lastOffset = i;
-			}
-			if (i == text.length()-1 && NewWord.length() > 0) {//最后一次循环将要退出时检查新词缓冲区内是否有字
-				result.add(new TokendWords(NewWord.toString(), 1l,new String[] { "NewWord" }, NewWord.length(), pos, start));				
-			}
-		}		
-		
-		return result;
-	}	
-	
-	
-	
-	public static List<TokendWords> getTokens(String text){
-		List<TokendWords> result = new ArrayList<TokendWords>();
-		StringBuffer NewWord = new StringBuffer();
-		
-		int lastOffset = 0;
-		int start = 0;
-		int pos = 0;
-		BitSet bitSet = new BitSet(text.length());
-		int minGramSize = 2;
-		int maxGramSize = 5;
-		
-		int length = text.length();
-		
-		//进行minGramSize到maxGramSize元切词
-		for (int gramSize = minGramSize; gramSize <= maxGramSize; gramSize++) {
-			//第gramSize元切词
-			for (int i = 0; i <= length - gramSize; i++) {
-				//用bloom过滤器保留在词典里的词
-				if (bloom.contains(text.substring(i, i + gramSize))) {
-					start = i;
-					//当前切割的词语:text.substring(i, i + gramSize)
-					result.add(new TokendWords(text.substring(i, i + gramSize), 1l,new String[] { "Word" }, gramSize, pos, start));
-					bitSet.set(i, i + gramSize);
-					pos++;
-				}
-			}		
-		}		
+		if (mode == 1)
+			return result;
 		
 		//新词识别
 		for (int i = 0; i < text.length(); i++) {

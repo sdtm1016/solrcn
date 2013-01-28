@@ -161,7 +161,9 @@ public final class NGramTokenizer extends Tokenizer {
     pos++;
     termAtt.setEmpty().append(inStr, oldPos, oldPos+gramSize);
     offsetAtt.setOffset(correctOffset(oldPos), correctOffset(oldPos+gramSize));
-    System.out.format("termAtt:%s,%s,%s", termAtt.toString(),oldPos,oldPos+gramSize);
+    if (!bloom.contains(termAtt.toString()))
+    		return false;
+    System.out.format("termAtt:%s,%s,%s\n", termAtt.toString(),oldPos,oldPos+gramSize);
     return true;
   }
   
