@@ -15,6 +15,7 @@ public class BloomSegmentImpl {
 	static String defaultModel = "model";		
 	private final static String punctuation = "[。，！？；,!?;]";	
 	
+	
 	public BloomSegmentImpl(){
 		this(defaultModel);
 	}
@@ -31,7 +32,26 @@ public class BloomSegmentImpl {
 		if (bloom == null) {			
 			bloom = new Bloom(filePath);
 		}
-	}		
+	}
+	
+	
+	/**
+	 * @param src
+	 * @return 保留繁简中英文数字
+	 */
+	private static String TokensFilter(String src) {
+		String GOODCHAR = "[\\u0030-\\u0039\\u0041-\\u005A\\u0061-\\u007A\\u4E00-\\u9FA5\\uFF10-\\uFF19]+";
+		StringBuilder result = new StringBuilder();
+		char[] srcChar;
+		srcChar = src.toCharArray();
+		for (int i = 0; i < srcChar.length; i++) {
+			char c = srcChar[i];
+			if (String.valueOf(c).matches(GOODCHAR)) {
+				result.append(c);
+			}
+		}
+		return result.toString();
+	}
 	
 	/**
 	 * 全分词,返回字典里存在的词和新词
@@ -129,9 +149,13 @@ public class BloomSegmentImpl {
 					//设置新词开始位置					
 				} else if ((i - lastOffset) == 1) { //当前位置和上一个字符偏移量为1则添加到新词缓冲区
 					NewWord.append(text.charAt(i));
-				} else {// 偏移量不等于1,说明上一个词已经结束,记录新词,并开始新一轮新词记录					
-					result.add(new TokendWords(NewWord.toString(), 1l,new String[] { "NewWord" }, NewWord.length(), pos, start));
+				} else {// 偏移量不等于1,说明上一个词已经结束,记录新词,并开始新一轮新词记录
+					
+					String NewToken = TokensFilter(NewWord.toString());
+					if (NewToken.length() > 1){
+					result.add(new TokendWords(NewToken, 1l,new String[] { "NewWord" }, NewToken.length(), pos, start));
 					pos++;					
+					}
 					NewWord.delete(0, NewWord.length());
 					start = i;
 					NewWord.append(text.charAt(i));
@@ -139,7 +163,11 @@ public class BloomSegmentImpl {
 				lastOffset = i;
 			}
 			if (i == text.length()-1 && NewWord.length() > 0) {//最后一次循环将要退出时检查新词缓冲区内是否有字
-				result.add(new TokendWords(NewWord.toString(), 1l,new String[] { "NewWord" }, NewWord.length(), pos, start));				
+				String NewToken = TokensFilter(NewWord.toString());
+				if (NewToken.length() > 1){
+					result.add(new TokendWords(NewToken, 1l,new String[] { "NewWord" }, NewToken.length(), pos, start));
+				}
+//				result.add(new TokendWords(NewWord.toString(), 1l,new String[] { "NewWord" }, NewWord.length(), pos, start));				
 			}
 		}		
 		

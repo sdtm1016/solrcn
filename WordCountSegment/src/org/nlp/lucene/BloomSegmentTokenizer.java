@@ -101,8 +101,7 @@ public final class BloomSegmentTokenizer extends Tokenizer {
 		}
 		
 		
-		if (buffer.length() > 0){
-			System.out.println("buffer:"+buffer.toString());
+		if (buffer.length() > 0){			
 			hasIllegalOffsets = (tokenStart + termAtt.length()) != tokenEnd;
 			tokenBuffer = wordSegmenter.getTokens(buffer.toString(),mode);
 			tokenIter = tokenBuffer.iterator();
