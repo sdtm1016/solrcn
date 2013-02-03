@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.nlp.algo.Bloom;
 
+
 /**
  * @author KmaDou
  *
@@ -13,14 +14,15 @@ import org.nlp.algo.Bloom;
 public class BloomSegmentImpl {
 	static Bloom bloom;
 	static String defaultModel = "model";		
-	private final static String punctuation = "[。，！？；,!?;]";	
+//	private final static String punctuation = "[。，！？；,!?;]";
+	private final static String punctuation = "[^\\u0030-\\u0039\\u0041-\\u005A\\u0061-\\u007A\\u4E00-\\u9FA5\\uFF10-\\uFF19]";
 	
 	
 	public BloomSegmentImpl(){
 		this(defaultModel);
 	}
 	
-	BloomSegmentImpl(String filePath) {
+	public BloomSegmentImpl(String filePath) {
 		initDic(filePath);
 	}
 		
@@ -47,10 +49,25 @@ public class BloomSegmentImpl {
 		for (int i = 0; i < srcChar.length; i++) {
 			char c = srcChar[i];
 			if (String.valueOf(c).matches(GOODCHAR)) {
-				result.append(c);
+				result.append(Character.toLowerCase(c));
+			}
+		}		
+		
+		return result.toString();
+	}
+	
+	/**
+	 * 判断是否为数字
+	 * @param text
+	 * @return
+	 */
+	public static boolean isNumeric(String src) {
+		for (int i = src.length(); --i >= 0;) {
+			if (!Character.isDigit(src.charAt(i))) {
+				return false;
 			}
 		}
-		return result.toString();
+		return true;
 	}
 	
 	/**
@@ -58,7 +75,7 @@ public class BloomSegmentImpl {
 	 * @param text
 	 * @return
 	 */
-	public static List<String> getTokensList(String text){		
+	public List<String> getTokensList(String text){		
 		List<String> result = new ArrayList<String>();
 		for (TokendWords word : getTokens(text,0)){
 			result.add(word.getWord());
@@ -71,7 +88,7 @@ public class BloomSegmentImpl {
 	 * @param text
 	 * @return
 	 */
-	public static List<String> getBaseList(String text){
+	public List<String> getBaseList(String text){
 		List<String> result = new ArrayList<String>();
 		for (TokendWords word : getTokens(text,1)){
 			result.add(word.getWord());
@@ -84,7 +101,7 @@ public class BloomSegmentImpl {
 	 * @param text
 	 * @return
 	 */
-	public static List<String> getNewList(String text){
+	public List<String> getNewList(String text){
 		List<String> result = new ArrayList<String>();
 		for (TokendWords word : getTokens(text,2)){
 			result.add(word.getWord());
@@ -98,8 +115,9 @@ public class BloomSegmentImpl {
 	 * @param mode //0 全部词语 1基本词语 2新词识别
 	 * @return
 	 */
-	public static List<TokendWords> getTokens(String text,int mode){
+	public List<TokendWords> getTokens(String text,int mode){
 		List<TokendWords> result = new ArrayList<TokendWords>();
+		List<TokendWords> newresult = new ArrayList<TokendWords>();
 		StringBuffer NewWord = new StringBuffer();
 				
 		int lastOffset = 0;
@@ -118,10 +136,12 @@ public class BloomSegmentImpl {
 			//第gramSize元切词
 			for (int n = 0; n <= length - gramSize; n++) {
 				//用bloom过滤器保留在词典里的词
-				if (bloom.contains(split[i].substring(n, n + gramSize))) {
-					//当前切割的词语:text.substring(i, i + gramSize)
+				String BaseToken = split[i].substring(n, n + gramSize);//当前切割的词语
+//				System.out.println("CheckToken:"+BaseToken);
+				if (bloom.contains(BaseToken)) {
+//					System.out.println("BaseToken:"+BaseToken);
 					if (mode != 2){
-						result.add(new TokendWords(split[i].substring(n, n + gramSize), 1l,new String[] { "Word" }, gramSize, pos, start));
+						result.add(new TokendWords(BaseToken, 1l,new String[] { "Word" }, gramSize, pos, start));
 						pos++;
 					}
 					if (mode != 1){
@@ -136,8 +156,8 @@ public class BloomSegmentImpl {
 			
 		}
 		
-		if (mode == 1)
-			return result;
+//		if (mode == 1)
+//			return result;
 		
 		//新词识别
 		for (int i = 0; i < text.length(); i++) {
@@ -152,9 +172,16 @@ public class BloomSegmentImpl {
 				} else {// 偏移量不等于1,说明上一个词已经结束,记录新词,并开始新一轮新词记录
 					
 					String NewToken = TokensFilter(NewWord.toString());
-					if (NewToken.length() > 1){
-					result.add(new TokendWords(NewToken, 1l,new String[] { "NewWord" }, NewToken.length(), pos, start));
-					pos++;					
+//					System.out.println("NewToken:"+NewToken);
+					if (NewToken.length() > 1){		
+						pos++;
+						if (bloom.containsEn(NewToken) || isNumeric(NewToken)) {
+							result.add(new TokendWords(NewToken, 1l,new String[] { "Word" }, NewToken.length(), pos, start));
+						} else if (mode != 1){
+							newresult.add(new TokendWords(NewToken, 1l,new String[] { "NewWord" }, NewToken.length(), pos, start));	
+						}
+						
+										
 					}
 					NewWord.delete(0, NewWord.length());
 					start = i;
@@ -164,21 +191,35 @@ public class BloomSegmentImpl {
 			}
 			if (i == text.length()-1 && NewWord.length() > 0) {//最后一次循环将要退出时检查新词缓冲区内是否有字
 				String NewToken = TokensFilter(NewWord.toString());
-				if (NewToken.length() > 1){
-					result.add(new TokendWords(NewToken, 1l,new String[] { "NewWord" }, NewToken.length(), pos, start));
-				}
-//				result.add(new TokendWords(NewWord.toString(), 1l,new String[] { "NewWord" }, NewWord.length(), pos, start));				
+				if (NewToken.length() > 1){					
+					if (bloom.containsEn(NewToken) || isNumeric(NewToken)) {
+						result.add(new TokendWords(NewToken, 1l,new String[] { "Word" }, NewToken.length(), pos, start));
+					} else if (mode != 1){
+						newresult.add(new TokendWords(NewToken, 1l,new String[] { "NewWord" }, NewToken.length(), pos, start));	
+					}
+					
+				}				
 			}
-		}		
+		}			
+
 		
-		return result;
+		switch(mode){
+		case 1:
+			return result;			
+		case 2:
+			return newresult;			
+		default:
+			result.addAll(newresult);
+			return result;
+		}		
 	}	
 	
 	
 	public static void main(String[] args) {
 		String s = "张一凡的电话13699191946,在上海市浦东新区耀华路99弄16号10402,上海市徐汇区东新路99弄38号402";
 		s = "中华人民共和国,电话13810000000邮编100044";
-		BloomSegmentImpl bloomSegmentImpl = new BloomSegmentImpl();
+		s = "我如果有天死于非命，一定是笨死的【提示：此用户正在使用Q++Web：http://web.qq.com/】";
+		BloomSegmentImpl bloomSegmentImpl = new BloomSegmentImpl("model_new_all");
 		System.out.println(bloomSegmentImpl.getBaseList(s));
 		System.out.println(bloomSegmentImpl.getNewList(s));
 	}

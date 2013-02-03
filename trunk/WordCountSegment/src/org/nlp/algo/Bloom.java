@@ -9,38 +9,50 @@ public class Bloom implements Serializable {
 	public static boolean init = false;
 
 	/* BitSet初始分配2^24个bit */
-	private static int DEFAULT_SIZE = 1 << 25;
+	private static int DEFAULT_SIZE = 1 << 28;
+//	private static int DEFAULT_SIZE = Integer.MAX_VALUE;
 
-	public static final int ELEM_NUM = 5 * 1000 * 10000; // 欲容纳的元素个数
+	public static final int ELEM_NUM = 20 * 1000 * 10000 / 2; // 欲容纳的元素个数
 	public static final double PERCENTAGE = 0.001; // 希望的误差率
 	GeneralHashFunctionLibrary GHFL = new GeneralHashFunctionLibrary();
 
 	/* 不同哈希函数的种子，一般应取质数 */
-	private static final int[] seeds = new int[] { 5, 7, 11, 13, 31, 37, 61 };
-	private static BitSet bits;
+//	private static final int[] seeds = new int[] { 5, 7, 11, 13, 31, 37, 61 };
+	private static BitSet[] bits = new BitSet[4]; //12 china , 34 english
+
+//	private static BitSet bits;
 	/* 哈希函数对象 */
-	private SimpleHash[] func = new SimpleHash[seeds.length];
+//	private SimpleHash[] func = new SimpleHash[seeds.length];
 
 	public Bloom() {
 
 		if (!init) {
-			DEFAULT_SIZE = (int) Math.abs(ELEM_NUM * Math.log(PERCENTAGE)
-					/ (Math.log(2) * Math.log(2))) + 1;
-			bits = new BitSet(DEFAULT_SIZE);
-			bits = new BitSet(2147483647);		
+			DEFAULT_SIZE = (int) Math.abs(ELEM_NUM * Math.log(PERCENTAGE) / (Math.log(2) * Math.log(2))) + 1;
+			bits[0] = new BitSet(DEFAULT_SIZE);
+			bits[1] = new BitSet(DEFAULT_SIZE);
+			bits[2] = new BitSet(DEFAULT_SIZE);
+			bits[3] = new BitSet(DEFAULT_SIZE);			
+	
+//			bits[0] = new BitSet(2147483647);
+//			bits[1] = new BitSet(2147483647);
 		}
-		for (int i = 0; i < seeds.length; i++) {
-			func[i] = new SimpleHash(DEFAULT_SIZE, seeds[i]);
-		}
+//		for (int i = 0; i < seeds.length; i++) {
+//			func[i] = new SimpleHash(DEFAULT_SIZE, seeds[i]);
+//		}
 	}
 
 	public Bloom(final int ELEM_NUM) {
 		DEFAULT_SIZE = (int) Math.abs(ELEM_NUM * Math.log(PERCENTAGE)
 				/ (Math.log(2) * Math.log(2))) + 1;
-		bits = new BitSet(DEFAULT_SIZE);
-		for (int i = 0; i < seeds.length; i++) {
-			func[i] = new SimpleHash(DEFAULT_SIZE, seeds[i]);
-		}
+		bits[0] = new BitSet(DEFAULT_SIZE);
+		bits[1] = new BitSet(DEFAULT_SIZE);
+		bits[2] = new BitSet(DEFAULT_SIZE);
+		bits[3] = new BitSet(DEFAULT_SIZE);		
+//		bits[0] = new BitSet(DEFAULT_SIZE);
+//		bits[1] = new BitSet(DEFAULT_SIZE);
+//		for (int i = 0; i < seeds.length; i++) {
+//			func[i] = new SimpleHash(DEFAULT_SIZE, seeds[i]);
+//		}
 	}
 
 	public Bloom(String modelFile) {
@@ -48,48 +60,111 @@ public class Bloom implements Serializable {
 	}
 
 	// 将字符串标记到bits中
-	public void add(String value) {
-		bits.set((int) (Math.abs(GHFL.APHash(value)) % 2147483647), true);
-		bits.set((int) (Math.abs(GHFL.BKDRHash(value)) % 2147483647), true);
-		bits.set((int) (Math.abs(GHFL.BPHash(value)) % 2147483647), true);
-		bits.set((int) (Math.abs(GHFL.DJBHash(value)) % 2147483647), true);
-		bits.set((int) (Math.abs(GHFL.FNVHash(value)) % 2147483647), true);
-		bits.set((int) (Math.abs(GHFL.JSHash(value)) % 2147483647), true);
-		bits.set((int) (Math.abs(GHFL.RSHash(value)) % 2147483647), true);
-		bits.set((int) (Math.abs(GHFL.SDBMHash(value)) % 2147483647), true);
+	public void add(final String value) {
+		
+		int hash = GHFL.FNVHash1(value);
+//		int hash = MurmurHash.hash32(value);
+		if (hash > 0){			
+			bits[0].set(hash);
+		}else{
+			bits[1].set(Math.abs(hash));
+		}
+//		
+//		int hash1 = GHFL.FNVHash1(value);
+//		if (hash1 > 0) {
+//			bits[0].set(hash1);
+//		} else {
+//			bits[1].set(Math.abs(hash1));
+//		}	
+		
+//		bits[0].set((int) (Math.abs(GHFL.APHash(value)) % 2147483647), true);
+//		bits[0].set((int) (Math.abs(GHFL.BKDRHash(value)) % 2147483647), true);
+//		bits[0].set((int) (Math.abs(GHFL.BPHash(value)) % 2147483647), true);
+//		bits[0].set((int) (Math.abs(GHFL.DJBHash(value)) % 2147483647), true);
+//		bits[0].set((int) (Math.abs(GHFL.FNVHash(value)) % 2147483647), true);
+//		bits[0].set((int) (Math.abs(GHFL.JSHash(value)) % 2147483647), true);
+//		bits[0].set((int) (Math.abs(GHFL.RSHash(value)) % 2147483647), true);
+//		bits[0].set((int) (Math.abs(GHFL.SDBMHash(value)) % 2147483647), true);
 		// for (SimpleHash f : func) {
 		// bits.set(f.hash(value), true);
 		// }
 	}
 
+	
+	public void addEn(final String value) {
+		
+		int hash = GHFL.FNVHash1(value);
+//		int hash = MurmurHash.hash32(value);
+		if (hash > 0){			
+			bits[2].set(hash);
+		}else{
+			bits[3].set(Math.abs(hash));
+		}
+	}
+	
 	// 判断字符串是否已经被bits标记
-	public boolean contains(String value) {
+	public boolean contains(final String value) {
+				
 		if (value == null) {
 			return false;
 		}
-
+		
 		boolean ret = true;
+		int hash = GHFL.FNVHash1(value);
+//		int hash = MurmurHash.hash32(value);
+		
+		if (hash > 0) {
+			ret = ret && bits[0].get(hash);
+		} else {
+			ret = ret && bits[1].get(Math.abs(hash));
+		}
+		
+//		int hash = GHFL.FNVHash1(value);
+//		int hash1 = GHFL.FNVHash1(value);
+//		if (hash1 > 0) {
+//			ret = ret && bits[0].get(hash1);
+//		} else {
+//			ret = ret && bits[1].get(Math.abs(hash1));
+//		}		
+		
 
-		ret = ret
-				&& bits.get((int) (Math.abs(GHFL.APHash(value) % 2147483647)));
-		ret = ret
-				&& bits.get((int) (Math.abs(GHFL.BKDRHash(value) % 2147483647)));
-		ret = ret
-				&& bits.get((int) (Math.abs(GHFL.BPHash(value) % 2147483647)));
-		ret = ret
-				&& bits.get((int) (Math.abs(GHFL.DJBHash(value) % 2147483647)));
-		ret = ret
-				&& bits.get((int) (Math.abs(GHFL.FNVHash(value) % 2147483647)));
-		ret = ret
-				&& bits.get((int) (Math.abs(GHFL.JSHash(value) % 2147483647)));
-		ret = ret
-				&& bits.get((int) (Math.abs(GHFL.RSHash(value) % 2147483647)));
-		ret = ret
-				&& bits.get((int) (Math.abs(GHFL.SDBMHash(value) % 2147483647)));
+//		ret = ret
+//				&& bits[0].get((int) (Math.abs(GHFL.APHash(value) % 2147483647)));
+//		ret = ret
+//				&& bits[0].get((int) (Math.abs(GHFL.BKDRHash(value) % 2147483647)));
+//		ret = ret
+//				&& bits[0].get((int) (Math.abs(GHFL.BPHash(value) % 2147483647)));
+//		ret = ret
+//				&& bits[0].get((int) (Math.abs(GHFL.DJBHash(value) % 2147483647)));
+//		ret = ret
+//				&& bits[0].get((int) (Math.abs(GHFL.FNVHash(value) % 2147483647)));
+//		ret = ret
+//				&& bits[0].get((int) (Math.abs(GHFL.JSHash(value) % 2147483647)));
+//		ret = ret
+//				&& bits[0].get((int) (Math.abs(GHFL.RSHash(value) % 2147483647)));
+//		ret = ret
+//				&& bits[0].get((int) (Math.abs(GHFL.SDBMHash(value) % 2147483647)));
 
 		// for (SimpleHash f : func) {
 		// ret = ret && bits.get(f.hash(value));
 		// }
+		return ret;
+	}
+	
+	public boolean containsEn(final String value) {
+		
+		if (value == null) {
+			return false;
+		}
+		
+		boolean ret = true;
+		int hash = GHFL.FNVHash1(value);
+//		int hash = MurmurHash.hash32(value);
+		if (hash > 0) {
+			ret = ret && bits[2].get(hash);
+		} else {
+			ret = ret && bits[3].get(Math.abs(hash));
+		}
 		return ret;
 	}
 
@@ -104,7 +179,7 @@ public class Bloom implements Serializable {
 	}
 
 	// 保存模型
-	public void saveModel(String modelFile) {
+	public void saveModel(final String modelFile) {
 		compressObject.saveObjectToFile(modelFile,bits);
 		
 //		try {
@@ -121,7 +196,7 @@ public class Bloom implements Serializable {
 	}
 
 	// 加载模型
-	public static void loadModel(String modelFile) {
+	public static void loadModel(final String modelFile) {
 		if (init) {
 			return;
 		}
@@ -154,7 +229,7 @@ public class Bloom implements Serializable {
 //			// TODO Auto-generated catch block
 //			e.printStackTrace();
 //		}
-		bits = (BitSet) compressObject.loadObjectFromFile(modelFile);
+		bits = (BitSet[]) compressObject.loadObjectFromFile(modelFile);
 		init = true;
 	}
 
@@ -180,19 +255,8 @@ public class Bloom implements Serializable {
 		}
 	}
 	
-//	public static void main(String[] argv){
-//		BitSet bits;
-//		bits = new BitSet(100);
-//		bits.set(0);
-//		bits.set(1);
-//		bits.set(3);
-//		
-//		System.out.println(bits.length());
-//		System.out.println(bits.size());
-//		System.out.println(bits.cardinality());
-////		for (int i =0;i<255;i++){
-////			System.out.println(Count(i));
-////		}
-//	}
+public static void main(String[] args) {
+	System.out.println(1 << 30);
+}
 	
 }

@@ -181,7 +181,7 @@ class GeneralHashFunctionLibrary {
 
 	/* End Of FNV Hash Function */
 
-	public static int FNVHash1(byte[] str) {
+	public int FNVHash1(byte[] str) {
 		final int p = 16777619;
 		int hash = (int) 2166136261L;
 		for (byte b : str)
@@ -194,7 +194,7 @@ class GeneralHashFunctionLibrary {
 		return hash;
 	}
 	
-	public static int FNVHash1(String str) {
+	public int FNVHash1(String str) {
 		final int p = 16777619;
 		int hash = (int) 2166136261L;
 		for (int i = 0; i < str.length(); i++)
