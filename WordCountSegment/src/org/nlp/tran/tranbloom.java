@@ -15,7 +15,8 @@ public class tranbloom {
 	static Bloom bl = new Bloom();
 	public static int maxlen = 0;
 	public static ArrayList<String> len;
-	static String path = "D:/sougo/hot";
+	final static String path = "D:/sougo/dichot";
+	
 
 	// 非递归
 	public static void scanDirNoRecursion(String path) throws Exception {
@@ -86,17 +87,20 @@ public class tranbloom {
 			count = 0;
 			while (line != null) {
 				word = line.split("[  	]")[0];
-				if (word.contains("人是"))
-					System.out.println(word+"\t"+filePath);
 				if (word.length() > maxlen)
 					maxlen = word.length();
-				bl.add(word);
+				if (filePath.contains("count")){
+					bl.addEn(word);
+				}else{
+					bl.add(word);	
+				}					
+				
 				count++;
 				wordcount++;
 				line = br.readLine();
 			}
 			br.close();
-			System.out.format("add %s words use %s ms\n", count,
+			System.out.format("%s add %s words use %s ms\n", filePath, count,
 					(System.currentTimeMillis() - tagTime));
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -105,18 +109,23 @@ public class tranbloom {
 
 	public static void main(String[] argc) throws Exception {
 		long a = System.currentTimeMillis();
-
+		String model = "model_new_all";
 		num = 0;
 		len = new ArrayList<String>();
 		scanDirNoRecursion(path);		
-//		bl.saveModel("model");
+		bl.saveModel(model);
 		
 		
 		System.out.println("人是:"+bl.contains("人是"));
-		Bloom lm = new Bloom("model");		
-		lm.loadModel("model");
+		Bloom lm = new Bloom(model);		
+		lm.loadModel(model);
 		System.out.println("乒乓球:"+lm.contains("乒乓球"));
 		System.out.println("人是:"+lm.contains("人是"));
+		System.out.println("ce:"+lm.contains("ce"));
+		System.out.println("ae:"+lm.contains("ae"));
+		System.out.println("件进行合:"+lm.contains("件进行合"));
+		System.out.println("件进行合:"+lm.containsEn("件进行合"));
+		
 		System.out.println("了一:"+lm.contains("了一"));
 		System.out.println("了完:"+lm.contains("了完"));
 		System.out.println("天天:"+lm.contains("天天"));

@@ -74,8 +74,8 @@ public final class BloomSegmentTokenizer extends Tokenizer {
 	}
 
 	private void init(){
-		wordSegmenter = new BloomSegmentImpl();
-		BloomSegmentImpl.initDic(modelFile);
+		wordSegmenter = new BloomSegmentImpl(modelFile);		
+//		BloomSegmentImpl.initDic(modelFile);
 	}	
 	
 	@Override
@@ -102,7 +102,7 @@ public final class BloomSegmentTokenizer extends Tokenizer {
 		
 		
 		if (buffer.length() > 0){			
-			hasIllegalOffsets = (tokenStart + termAtt.length()) != tokenEnd;
+			hasIllegalOffsets = (tokenStart + termAtt.length()) != tokenEnd;	
 			tokenBuffer = wordSegmenter.getTokens(buffer.toString(),mode);
 			tokenIter = tokenBuffer.iterator();
 			}			
@@ -111,14 +111,14 @@ public final class BloomSegmentTokenizer extends Tokenizer {
 			return false;
 		} else {
 			TokendWords nextWord = tokenIter.next();
-
+			
 			termAtt.copyBuffer(nextWord.next(), 0, nextWord.next().length);
 			if (hasIllegalOffsets) {
 				offsetAtt.setOffset(tokenStart, tokenEnd);
 			} else {
 				offsetAtt.setOffset(nextWord.start, nextWord.end);
-			}
-			typeAtt.setType("word");
+			}			
+			typeAtt.setType(nextWord.getAttri()[0]);
 			return true;
 		}
 				
