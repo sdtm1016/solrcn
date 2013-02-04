@@ -49,14 +49,18 @@ public class MaxWordTokenizer extends Tokenizer {
 		clearAttributes();
 		buffer.setLength(0);
 
-		ArrayList<String> al = new ArrayList<String>();
+//		ArrayList<String> al = new ArrayList<String>();
 		char ch;
 		int ci;
 
 		tokenStart = tokenEnd;
 		ci = input.read();
 		ch = (char) ci;
-		currentTokenType = tokenType = Character.getType(ch);
+		
+		tokenType = Character.getType(ch);
+		
+		if (tokenEnd == 0)
+			currentTokenType = tokenType;
 
 		while (true) {
 			if (ci == -1) {
@@ -66,12 +70,13 @@ public class MaxWordTokenizer extends Tokenizer {
 					buffer.append(ch);
 					tokenLength++;
 				} else {
-					tokenBuffer.add(new TokendWords(buffer.toString(), 1L,
-							tokenAttrib, tokenLength, tokenPos, 0));
-					tokenPos++;
-					al.add(buffer.toString());
-					buffer.delete(0, tokenLength);
-					tokenLength = 0;
+					break;
+//					tokenBuffer.add(new TokendWords(buffer.toString(), 1L,
+//							tokenAttrib, tokenLength, tokenPos, 0));
+//					tokenPos++;
+//					al.add(buffer.toString());
+//					buffer.delete(0, tokenLength);
+//					tokenLength = 0;					
 				}
 
 				ci = input.read();
@@ -81,15 +86,23 @@ public class MaxWordTokenizer extends Tokenizer {
 			}
 		}
 
-		if (al.size() > 0) {
-			hasIllegalOffsets = (tokenStart + termAtt.length()) != tokenEnd;
-			tokenIter = al.iterator();
-			String nextWord = tokenIter.next();			
-			termAtt.copyBuffer(nextWord.toCharArray(), 0, nextWord.length());
+		if (buffer.length() > 0){
+			termAtt.copyBuffer(buffer.toString().toCharArray(), 0, buffer.length());
 			return true;
-		} else {
+		}else{
 			return false;
 		}
+		
+		
+//		if (al.size() > 0) {
+//			hasIllegalOffsets = (tokenStart + termAtt.length()) != tokenEnd;
+//			tokenIter = al.iterator();
+//			String nextWord = tokenIter.next();			
+//			termAtt.copyBuffer(nextWord.toCharArray(), 0, nextWord.length());
+//			return true;
+//		} else {
+//			return false;
+//		}
 
 	}
 
