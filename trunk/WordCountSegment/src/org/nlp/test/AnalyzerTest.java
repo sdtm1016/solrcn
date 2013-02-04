@@ -7,6 +7,7 @@ import java.io.StringReader;
 import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.nlp.lucene.BloomSegmentTokenizer;
+import org.nlp.lucene.MaxWordTokenizer;
 
 
 public class AnalyzerTest {
@@ -51,7 +52,9 @@ public class AnalyzerTest {
 //		stream.close();
 //		
 		
-		Tokenizer tokenizer = new BloomSegmentTokenizer(reader,1,"model_new_all");
+//		Tokenizer tokenizer = new BloomSegmentTokenizer(reader,1,"model_new_all");
+		Tokenizer tokenizer = new MaxWordTokenizer(reader);
+		
 		
 		CharTermAttribute termAtt = tokenizer
 				.addAttribute(CharTermAttribute.class);
