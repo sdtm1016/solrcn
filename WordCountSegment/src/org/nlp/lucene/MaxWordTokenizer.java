@@ -2,9 +2,13 @@ package org.nlp.lucene;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+import org.nlp.impl.TokendWords;
 
 public class MaxWordTokenizer extends Tokenizer {
 
@@ -12,11 +16,21 @@ public class MaxWordTokenizer extends Tokenizer {
 	private static final int IO_BUFFER_SIZE = 4096;
 	private char[] ioBuffer = new char[IO_BUFFER_SIZE];
 
+	private final StringBuilder buffer = new StringBuilder();
+	
+	private Iterator<String> tokenIter;
+	private List<TokendWords> tokenBuffer;
+	private final static String[] tokenAttrib = new String[] { "Word" };
+	
+	private int tokenStart = 0, tokenEnd = 0, tokenLength = 0 , tokenPos =0;
+	private boolean hasIllegalOffsets;
+	private int currentTokenType = 0, tokenType = 0;	
+
 	private boolean done;
 	private int i = 0; // i是用来控制起始位置的变量
 	private int upto = 0;
 
-	protected MaxWordTokenizer(Reader input) {
+	public MaxWordTokenizer(Reader input) {
 		super(input);
 		termAtt = (CharTermAttribute) addAttribute(CharTermAttribute.class);
 		this.done = false;
@@ -32,36 +46,51 @@ public class MaxWordTokenizer extends Tokenizer {
 
 	@Override
 	public boolean incrementToken() throws IOException {
-		if (!done) {
-			clearAttributes();
-			done = true;
-			upto = 0;
-			i = 0;
-			while (true) {
-				final int length = input.read(ioBuffer, upto, ioBuffer.length
-						- upto);
-				if (length == -1) {
-					break;
+		clearAttributes();
+		buffer.setLength(0);
+
+		ArrayList<String> al = new ArrayList<String>();
+		char ch;
+		int ci;
+
+		tokenStart = tokenEnd;
+		ci = input.read();
+		ch = (char) ci;
+		currentTokenType = tokenType = Character.getType(ch);
+
+		while (true) {
+			if (ci == -1) {
+				break;
+			} else {
+				if (currentTokenType == tokenType) {
+					buffer.append(ch);
+					tokenLength++;
+				} else {
+					tokenBuffer.add(new TokendWords(buffer.toString(), 1L,
+							tokenAttrib, tokenLength, tokenPos, 0));
+					tokenPos++;
+					al.add(buffer.toString());
+					buffer.delete(0, tokenLength);
+					tokenLength = 0;
 				}
-				upto += length;
-				if (upto == ioBuffer.length) {
-					resizeIOBuffer(upto * 2);
-				}
+
+				ci = input.read();
+				ch = (char) ci;
+				tokenType = Character.getType(ch);				
+				tokenEnd++;
 			}
+		}
 
-			if (i < upto) {
-				char[] word = null; // dic.matchLong(ioBuffer,i,upto);正向最大匹配的结果
-				if (word != null) {// 已经匹配上了
-					termAtt.copyBuffer(word, 0, word.length);
-					++i;
-				}
-				return true;
-
-			}
-
+		if (al.size() > 0) {
+			hasIllegalOffsets = (tokenStart + termAtt.length()) != tokenEnd;
+			tokenIter = al.iterator();
+			String nextWord = tokenIter.next();			
+			termAtt.copyBuffer(nextWord.toCharArray(), 0, nextWord.length());
+			return true;
+		} else {
 			return false;
 		}
-		return false;
+
 	}
 
 }

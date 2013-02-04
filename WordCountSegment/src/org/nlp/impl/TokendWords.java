@@ -17,6 +17,14 @@ public class TokendWords {
 	public int start;
 	public int end;
 
+	/**
+	 * @param word
+	 * @param freq
+	 * @param attri
+	 * @param length
+	 * @param pos
+	 * @param start
+	 */
 	public TokendWords(String word, long freq, String[] attri, int length,
 			int pos, int start) {
 		this.word = word;
