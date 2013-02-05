@@ -14,8 +14,9 @@ public class AnalyzerTest {
 
 	public static void main(String[] args) throws IOException {
 		// text to tokenize
-		String text = "中华人民共和国,上海市徐汇区东新路99弄38号402,中华人民共和国,电话13810000000邮编100044";
-		text = "我如果有天死于非命，一定是笨死的【提示：此用户正在使用Q  Web：http://web.qq.com/】";
+		String text = "中华人民共和国,上海市徐汇区东新路99弄38号402,中华人民共和国,电话13810000000邮编100044.我如果有天死于非命，一定是笨死的【提示：此用户正在使用Q  Web：http://web.qq.com/】";
+//		text = "";
+//		text = "Web：http://web.qq.com/】";
 		
 		// "上海市徐汇区东新路99弄38号402";
 		// "上海市浦东新区耀华路99弄16号10402";
