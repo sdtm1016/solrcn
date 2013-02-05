@@ -21,6 +21,8 @@ public class MaxWordTokenizer extends Tokenizer {
 	private Iterator<String> tokenIter;
 	private List<TokendWords> tokenBuffer;
 	private final static String[] tokenAttrib = new String[] { "Word" };
+	private char ch = 0;
+	private int ci = -1;
 	
 	private int tokenStart = 0, tokenEnd = 0, tokenLength = 0 , tokenPos =0;
 	private boolean hasIllegalOffsets;
@@ -47,17 +49,17 @@ public class MaxWordTokenizer extends Tokenizer {
 	@Override
 	public boolean incrementToken() throws IOException {
 		clearAttributes();
-		buffer.setLength(0);
+		
 
 //		ArrayList<String> al = new ArrayList<String>();
-		char ch;
-		int ci;
+
 
 		tokenStart = tokenEnd;
-		ci = input.read();
-		ch = (char) ci;
-		
-		tokenType = Character.getType(ch);
+		if (buffer.length() == 0 && ci ==-1){
+			ci = input.read();
+			ch = (char) ci;				
+			tokenType = Character.getType(Character.toLowerCase(ch));
+		}						
 		
 		if (tokenEnd == 0)
 			currentTokenType = tokenType;
@@ -69,25 +71,27 @@ public class MaxWordTokenizer extends Tokenizer {
 				if (currentTokenType == tokenType) {
 					buffer.append(ch);
 					tokenLength++;
-				} else {
-					break;
-//					tokenBuffer.add(new TokendWords(buffer.toString(), 1L,
-//							tokenAttrib, tokenLength, tokenPos, 0));
-//					tokenPos++;
-//					al.add(buffer.toString());
-//					buffer.delete(0, tokenLength);
-//					tokenLength = 0;					
+					ci = input.read();
+					ch = (char) ci;
+					tokenType = Character.getType(Character.toLowerCase(ch));			
+					tokenEnd++;					
+				}
+				 else {						
+					termAtt.copyBuffer(buffer.toString().toCharArray(), 0, buffer.length());					
+					buffer.setLength(0);
+//					buffer.append(ch);
+					tokenLength = 0;
+					currentTokenType = tokenType;
+					return true;					
 				}
 
-				ci = input.read();
-				ch = (char) ci;
-				tokenType = Character.getType(ch);				
-				tokenEnd++;
+
 			}
 		}
 
 		if (buffer.length() > 0){
 			termAtt.copyBuffer(buffer.toString().toCharArray(), 0, buffer.length());
+			buffer.setLength(0);			
 			return true;
 		}else{
 			return false;
