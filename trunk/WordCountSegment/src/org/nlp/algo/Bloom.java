@@ -12,7 +12,7 @@ public class Bloom implements Serializable {
 	private static int DEFAULT_SIZE = 1 << 28;
 //	private static int DEFAULT_SIZE = Integer.MAX_VALUE;
 
-	public static final int ELEM_NUM = 20 * 1000 * 10000 / 2; // 欲容纳的元素个数
+	public static final int ELEM_NUM = 5000 * 10000; // 欲容纳的元素个数
 	public static final double PERCENTAGE = 0.001; // 希望的误差率
 	GeneralHashFunctionLibrary GHFL = new GeneralHashFunctionLibrary();
 

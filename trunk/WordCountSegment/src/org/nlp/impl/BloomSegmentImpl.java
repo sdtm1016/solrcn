@@ -134,6 +134,7 @@ public class BloomSegmentImpl {
 		//进行minGramSize到maxGramSize元切词
 		for (int gramSize = minGramSize; gramSize <= maxGramSize; gramSize++) {
 			//第gramSize元切词
+			pos = 1;
 			for (int n = 0; n <= length - gramSize; n++) {
 				//用bloom过滤器保留在词典里的词
 				String BaseToken = split[i].substring(n, n + gramSize);//当前切割的词语
@@ -219,7 +220,7 @@ public class BloomSegmentImpl {
 		String s = "张一凡的电话13699191946,在上海市浦东新区耀华路99弄16号10402,上海市徐汇区东新路99弄38号402";
 		s = "中华人民共和国,电话13810000000邮编100044";
 		s = "我如果有天死于非命，一定是笨死的【提示：此用户正在使用Q++Web：http://web.qq.com/】";
-		BloomSegmentImpl bloomSegmentImpl = new BloomSegmentImpl("model_new_all");
+		BloomSegmentImpl bloomSegmentImpl = new BloomSegmentImpl("model");
 		System.out.println(bloomSegmentImpl.getBaseList(s));
 		System.out.println(bloomSegmentImpl.getNewList(s));
 	}
