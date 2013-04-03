@@ -2,6 +2,7 @@ package org.nlp.solr.handler.component;
 
 import java.io.IOException;
 
+import org.apache.lucene.index.DocTermOrds.TermOrdsIterator;
 import org.apache.solr.handler.component.ResponseBuilder;
 import org.apache.solr.handler.component.SearchComponent;
 import org.apache.solr.request.UnInvertedField;
@@ -24,7 +25,7 @@ public class ExampleSearchComponent extends SearchComponent {
 			SolrIndexSearcher searcher = builder.req.getSearcher();
 			for (String fieldName : fieldNames) {
 				UnInvertedField field = UnInvertedField.getUnInvertedField(
-						fieldName, searcher);
+						fieldName, searcher);								
 				totalMemorySize += field.memSize();
 			}
 		}
