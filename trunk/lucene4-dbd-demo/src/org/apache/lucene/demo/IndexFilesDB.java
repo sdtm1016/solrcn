@@ -9,6 +9,7 @@ import java.util.Random;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
+import org.apache.lucene.document.StringField;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
@@ -52,6 +53,7 @@ public class IndexFilesDB {
 		
 		//update for lucene4.x
 		IndexWriterConfig iwc = new IndexWriterConfig(Version.LUCENE_41, new StandardAnalyzer( Version.LUCENE_41));
+		
 		IndexWriter writer = new IndexWriter(directory, iwc);
 	
 		
@@ -63,10 +65,8 @@ public class IndexFilesDB {
 			for (int j = 0; j < 100000; j++) {
 				Document doc = new Document();
 				String seed = System.currentTimeMillis()+ "_" + rnd.nextInt(99999999);
-				doc.add(new Field("id", "id" + count, Field.Store.YES,
-						Field.Index.ANALYZED));
-				doc.add(new Field("title", "title" + seed+ seed, Field.Store.YES,
-						Field.Index.ANALYZED));
+				doc.add(new StringField("id", "id" + count, Field.Store.YES));
+				doc.add(new StringField("title", "title" + seed+ seed, Field.Store.YES));
 				docs.add(doc);
 //				writer.addDocument(doc);
 				count++;
