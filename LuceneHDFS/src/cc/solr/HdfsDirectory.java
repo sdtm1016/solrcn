@@ -128,6 +128,7 @@ public class HdfsDirectory extends Directory {
 			e.printStackTrace();
 		} finally {
 		}
+//		System.out.println(dirList);
 		return dirList.toArray(new String[dirList.size()]);
 	}
 	
@@ -135,7 +136,7 @@ public class HdfsDirectory extends Directory {
 	public IndexInput openInput(String name, IOContext arg1) throws IOException {
 		return new HdfsIndexInput(fs, path, name);
 	}
-
+	
 	@Override
 	public void sync(Collection<String> arg0) throws IOException {
 		// TODO Auto-generated method stub
