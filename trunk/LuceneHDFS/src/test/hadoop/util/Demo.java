@@ -19,11 +19,12 @@ public class Demo {
 //		System.out.println(HDFSUtil.getLength(fs, "demo.txt"));
 		//		
 //		 String content = HDFSUtil.read(fs, dirName);
-		 HDFSUtil.download(fs, "z:/index", "/");
+		 
 		//
 //		 System.out.println(content);
-//		HDFSUtil.listFile(fs, "");
+		HDFSUtil.listFile(fs, "");
 //		HDFSUtil.listNode(fs);
+//		HDFSUtil.download(fs, "z:/index", "/");
 		fs.close();
 	}
 }
