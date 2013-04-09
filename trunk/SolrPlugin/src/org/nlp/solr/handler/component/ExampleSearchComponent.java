@@ -2,7 +2,13 @@ package org.nlp.solr.handler.component;
 
 import java.io.IOException;
 
+import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.index.DocTermOrds.TermOrdsIterator;
+import org.apache.lucene.index.Fields;
+import org.apache.lucene.index.TermsEnum;
+import org.apache.lucene.util.BytesRef;
+import org.apache.solr.common.util.NamedList;
+import org.apache.solr.common.util.SimpleOrderedMap;
 import org.apache.solr.handler.component.ResponseBuilder;
 import org.apache.solr.handler.component.SearchComponent;
 import org.apache.solr.request.UnInvertedField;
@@ -18,18 +24,37 @@ public class ExampleSearchComponent extends SearchComponent {
 	}
 
 	@Override
-	public void process(ResponseBuilder builder) throws IOException {
+	public void process(ResponseBuilder rb) throws IOException {
 		long totalMemorySize = 0;
+	    
 		if (fieldNames != null) {
-
-			SolrIndexSearcher searcher = builder.req.getSearcher();
+			
+			SolrIndexSearcher searcher = rb.req.getSearcher();
+			final AtomicReader indexReader = rb.req.getSearcher().getAtomicReader();
+			NamedList<Object> termsResult = new SimpleOrderedMap<Object>();
+			
+			Fields lfields = indexReader.fields();
+			
+			for (String field : lfields) {
+				NamedList<Integer> fieldTerms = new NamedList<Integer>();
+				termsResult.add(field, fieldTerms);
+			}
+			
+		   
 			for (String fieldName : fieldNames) {
 				UnInvertedField field = UnInvertedField.getUnInvertedField(
-						fieldName, searcher);								
+						fieldName, searcher);
+				TermsEnum ordTermsEnum = field.getOrdTermsEnum(searcher.getAtomicReader());
+				rb.rsp.add("ordTermsEnum", ordTermsEnum.next());
+				BytesRef next = ordTermsEnum.next();
+				termsResult.add(fieldName, next);
+				
 				totalMemorySize += field.memSize();
 			}
+			 rb.rsp.add("terms", termsResult);
 		}
-		builder.rsp.add("example", totalMemorySize);
+		
+		rb.rsp.add("example", totalMemorySize);		
 	}
 
 	@Override

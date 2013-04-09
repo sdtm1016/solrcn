@@ -1,6 +1,7 @@
 package org.nlp.solr.handler.component;
 
-import org.apache.log4j.Logger;
+import java.util.logging.Logger;
+
 import org.apache.solr.handler.StandardRequestHandler;
 import org.apache.solr.request.SolrQueryRequest;
 import org.apache.solr.response.SolrQueryResponse;
