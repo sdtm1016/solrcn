@@ -24,16 +24,15 @@ public class NlpSimilarity extends DefaultSimilarity {
 	   *  FieldInvertState#getNumOverlap()}.
 	   *
 	   *  @lucene.experimental */
-	  @Override
-	  public void computeNorm(FieldInvertState state, Norm norm) {
-	    final int numTerms;
-	    if (discountOverlaps)
-	      numTerms = state.getLength() - state.getNumOverlap();
-	    else
-	      numTerms = state.getLength();
-	    norm.setByte(encodeNormValue(state.getBoost() * ((float) (1.0 / Math.sqrt(numTerms)))));
-	  }
-
+//	  @Override
+//	  public void computeNorm(FieldInvertState state, Norm norm) {
+//	    final int numTerms;
+//	    if (discountOverlaps)
+//	      numTerms = state.getLength() - state.getNumOverlap();
+//	    else
+//	      numTerms = state.getLength();
+//	    norm.setByte(encodeNormValue(state.getBoost() * ((float) (1.0 / Math.sqrt(numTerms)))));
+//	  }
 	  /** Implemented as <code>sqrt(freq)</code>. */
 	  @Override
 	  public float tf(float freq) {
