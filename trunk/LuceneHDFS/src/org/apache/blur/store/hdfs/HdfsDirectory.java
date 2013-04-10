@@ -39,7 +39,7 @@ public class HdfsDirectory extends Directory {
 
 	public static final int BUFFER_SIZE = 8192;
 
-	private static final String LF_EXT = ".lf";
+	private static final String LF_EXT = ".hd";
 	protected static final String SEGMENTS_GEN = "segments.gen";
 	protected static final IndexOutput NULL_WRITER = new NullIndexOutput();
 	protected Path _hdfsDirPath;
@@ -78,12 +78,12 @@ public class HdfsDirectory extends Directory {
 	}
 
 	public IndexOutput createOutput(String name) throws IOException {
+		
 		if (SEGMENTS_GEN.equals(name)) {
 			return NULL_WRITER;
 		}
 		name = getRealName(name);
-		HdfsFileWriter writer = new HdfsFileWriter(getFileSystem(), new Path(
-				_hdfsDirPath, name));
+		HdfsFileWriter writer = new HdfsFileWriter(getFileSystem(), new Path(_hdfsDirPath, name));
 		return new HdfsLayeredIndexOutput(writer);
 	}
 
@@ -142,7 +142,7 @@ public class HdfsDirectory extends Directory {
 		if (name.endsWith(LF_EXT)) {
 			return true;
 		}
-		return false;
+		return true;
 	}
 
 	@Override

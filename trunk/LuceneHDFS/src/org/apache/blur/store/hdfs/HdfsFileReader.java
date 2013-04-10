@@ -45,7 +45,7 @@ public class HdfsFileReader extends DataInput {
   private long _realPos;
   private boolean isClone;
 
-  public HdfsFileReader(FileSystem fileSystem, Path path, int bufferSize) throws IOException {
+  public HdfsFileReader(FileSystem fileSystem, Path path, int bufferSize) throws IOException {	  
     if (!fileSystem.exists(path)) {
       throw new FileNotFoundException(path.toString());
     }

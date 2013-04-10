@@ -6,11 +6,6 @@
 	<classpathentry kind="lib" path="lib/lucene-core-4.1-SNAPSHOT.jar" sourcepath="/solr-4.1.0-src"/>
 	<classpathentry kind="lib" path="lib/lucene-queries-4.1-SNAPSHOT.jar"/>
 	<classpathentry kind="lib" path="lib/lucene-queryparser-4.1-SNAPSHOT.jar"/>
-	<classpathentry kind="lib" path="lib/hadoop-ant-0.20.203.0.jar"/>
-	<classpathentry kind="lib" path="lib/hadoop-core-0.20.203.0.jar"/>
-	<classpathentry kind="lib" path="lib/hadoop-examples-0.20.203.0.jar"/>
-	<classpathentry kind="lib" path="lib/hadoop-test-0.20.203.0.jar"/>
-	<classpathentry kind="lib" path="lib/hadoop-tools-0.20.203.0.jar"/>
 	<classpathentry kind="lib" path="lib/aspectjrt-1.6.5.jar"/>
 	<classpathentry kind="lib" path="lib/aspectjtools-1.6.5.jar"/>
 	<classpathentry kind="lib" path="lib/commons-beanutils-1.7.0.jar"/>
@@ -47,5 +42,10 @@
 	<classpathentry kind="lib" path="lib/slf4j-api-1.4.3.jar"/>
 	<classpathentry kind="lib" path="lib/slf4j-log4j12-1.4.3.jar"/>
 	<classpathentry kind="lib" path="lib/xmlenc-0.52.jar"/>
+	<classpathentry kind="lib" path="lib/hadoop-ant-0.20.203.0.jar"/>
+	<classpathentry kind="lib" path="lib/hadoop-core-0.20.203.0.jar"/>
+	<classpathentry kind="lib" path="lib/hadoop-examples-0.20.203.0.jar"/>
+	<classpathentry kind="lib" path="lib/hadoop-test-0.20.203.0.jar"/>
+	<classpathentry kind="lib" path="lib/hadoop-tools-0.20.203.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

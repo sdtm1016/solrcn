@@ -75,7 +75,7 @@ public class testLuceneHDFS {
 	}
 
 	public static void main(String[] args) throws IOException {
-//		Index();
+		Index();
 		System.out.println("done....");
 		org.apache.blur.store.hdfs.HdfsDirectory directory = new org.apache.blur.store.hdfs.HdfsDirectory("hdfs://master:9000/user/KmaDou/index2");
 		IndexReader reader;
@@ -91,10 +91,16 @@ public class testLuceneHDFS {
 			ScoreDoc[] hits = results.scoreDocs;
 			int numTotalHits = results.totalHits;
 			System.out.println(numTotalHits + " total matching documents");
+			long tagTime = System.currentTimeMillis();
 			hits = searcher.search(query, numTotalHits).scoreDocs;
-			Document doc = searcher.doc(hits[hits.length - 1].doc);
-			String path = doc.get("id");
-			System.out.println(path);
+			System.out.println(System.currentTimeMillis() - tagTime);
+			for (int i = 0; i < 2; i++) {
+				Document doc = searcher.doc(hits[i].doc);
+				String path = doc.get("id");
+				System.out.println(path);
+			}
+		
+			
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (ParseException e) {
