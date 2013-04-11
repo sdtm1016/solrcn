@@ -7,7 +7,7 @@ import org.apache.solr.search.ValueSourceParser;
 public class RedisValueSourceParser extends ValueSourceParser {
 
 	public ValueSource parse(FunctionQParser fqp) {
-		return new RedisValueSource();
+		return new RedisValueSource(null);
 	}
 
 }
