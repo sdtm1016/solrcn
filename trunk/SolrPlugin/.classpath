@@ -21,7 +21,7 @@
 	<classpathentry kind="lib" path="lib/lucene-highlighter-4.1.0.jar"/>
 	<classpathentry kind="lib" path="lib/lucene-memory-4.1.0.jar"/>
 	<classpathentry kind="lib" path="lib/lucene-misc-4.1.0.jar"/>
-	<classpathentry kind="lib" path="lib/lucene-queries-4.1.0.jar"/>
+	<classpathentry kind="lib" path="lib/lucene-queries-4.1.0.jar" sourcepath="/lucene_solr_4_1"/>
 	<classpathentry kind="lib" path="lib/lucene-queryparser-4.1.0.jar"/>
 	<classpathentry kind="lib" path="lib/lucene-spatial-4.1.0.jar"/>
 	<classpathentry kind="lib" path="lib/lucene-suggest-4.1.0.jar"/>
@@ -34,5 +34,7 @@
 	<classpathentry kind="lib" path="lib/wstx-asl-3.2.7.jar"/>
 	<classpathentry kind="lib" path="lib/zookeeper-3.4.5.jar"/>
 	<classpathentry kind="lib" path="lib/lingpipe-4.1.0.jar"/>
+	<classpathentry kind="lib" path="lib/jedis-2.1.0.jar"/>
+	<classpathentry kind="lib" path="lib/json-lib-2.4-jdk15.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
