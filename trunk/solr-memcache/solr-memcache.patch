@@ -1,0 +1,22 @@
+Index: src/java/org/apache/solr/search/DocSet.java
+===================================================================
+--- src/java/org/apache/solr/search/DocSet.java	(revision 781268)
++++ src/java/org/apache/solr/search/DocSet.java	(working copy)
+@@ -17,6 +17,8 @@
+ 
+ package org.apache.solr.search;
+ 
++import java.io.Serializable;
++
+ import org.apache.solr.common.SolrException;
+ import org.apache.solr.util.OpenBitSet;
+ 
+@@ -138,7 +140,7 @@
+ }
+ 
+ /** A base class that may be usefull for implementing DocSets */
+-abstract class DocSetBase implements DocSet {
++abstract class DocSetBase implements DocSet, Serializable {
+ 
+   // Not implemented efficiently... for testing purposes only
+   public boolean equals(Object obj) {
