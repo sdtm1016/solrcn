@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="solr-patch" default="apply-patch" basedir=".">  
+	  
+	<target name="apply-patch" description="Apply a patch file.  Set -Dpatch.file">  
+		<patch patchfile="${patch.file}" strip="0"/>  
+	</target>
+</project>
+
+
