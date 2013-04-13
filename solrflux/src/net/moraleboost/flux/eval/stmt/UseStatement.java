@@ -17,6 +17,12 @@ public class UseStatement extends BaseStatement
     
     public void setUrl(String url)
     {
+    	if (url.endsWith("/")){
+    		this.name = url.substring(url.lastIndexOf("/", url.length()-2)+1, url.length()-1);
+    	}
+    	else{
+    		this.name = url.substring(url.lastIndexOf("/", url.length()-2)+1, url.length());
+    	}
         this.url = url;
     }
     
