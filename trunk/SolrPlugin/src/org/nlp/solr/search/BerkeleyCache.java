@@ -18,6 +18,7 @@ import org.apache.solr.common.SolrException;
 import org.apache.solr.common.util.NamedList;
 import org.apache.solr.common.util.SimpleOrderedMap;
 import org.apache.solr.search.CacheRegenerator;
+import org.apache.solr.search.QueryResultKey;
 import org.apache.solr.search.SolrCache;
 import org.apache.solr.search.SolrCacheBase;
 import org.apache.solr.search.SolrIndexSearcher;
@@ -30,15 +31,19 @@ public class BerkeleyCache<K, V> extends SolrCacheBase implements SolrCache<K,V>
 	private static final long serialVersionUID = 1L;
 
 	// private StoredSortedMap<String, String> map; //原锟斤拷锟侥达拷锟斤拷
-	private StoredMap<K, V> map; // 希锟斤拷某锟斤拷锟斤拷锟�
+	 StoredMap<QueryResultKey, Object> map; // 希锟斤拷某锟斤拷锟斤拷锟�
 
 	private Environment exampleEnv;
 	private Database myClassDb;
 	private Database store;
 	private DatabaseConfig dbConfig;
-	private String DataDir;
+	private String DataDir = "z:/";
 	private final String databaseName = "Cache";
+	
+	public BerkeleyCache() {
 
+	}
+	
 	public BerkeleyCache(String DataDir) {
 		this.DataDir = DataDir;
 		
@@ -60,47 +65,59 @@ public class BerkeleyCache<K, V> extends SolrCacheBase implements SolrCache<K,V>
 	}
 
 	@SuppressWarnings("unchecked")
-	public <EnvironmenConfig> void initMap(K key,V value) {
+	public <EnvironmenConfig> void initMap() {
 
 		try {
+			
+			EnvironmentConfig envConfig = new EnvironmentConfig();
+			envConfig.setTransactional(false);
+			envConfig.setAllowCreate(true);
+			File envDir = new File(this.DataDir);
+			exampleEnv = new Environment(envDir, envConfig);
+			
+			dbConfig = new DatabaseConfig();
+			dbConfig.setAllowCreate(true);
+			dbConfig.setTransactional(false);
+			dbConfig.setSortedDuplicates(false);
+
+			myClassDb = exampleEnv.openDatabase(null, databaseName, dbConfig);
 			// 锟斤拷始锟斤拷catalog锟斤拷
 			StoredClassCatalog catalog = new StoredClassCatalog(myClassDb);
 
 //			TupleBinding<K> keyBinding = TupleBinding.getPrimitiveBinding((Class<K>)String.class);
 			
-			SerialBinding<K> keyBinding = new SerialBinding<K>(catalog, (Class<K>) Object.class);
+			SerialBinding<QueryResultKey> keyBinding = new SerialBinding<QueryResultKey>(catalog, QueryResultKey.class);
 			// 锟斤拷value锟斤拷为锟斤拷锟斤拷锟斤拷锟斤拷谢锟斤拷锟绞斤拷娲�
-			SerialBinding<V> valueBinding = new SerialBinding<V>(catalog, (Class<V>) Object.class);
+			SerialBinding<Object> valueBinding = new SerialBinding<Object>(catalog, Object.class);
 			store = exampleEnv.openDatabase(null, databaseName, dbConfig);
 			// 锟斤拷锟斤拷锟斤拷荽娲⒂筹拷锟�
 			// StoredSortedMap<String, String> map = new StoredSortedMap<String,
 			// String>(store, keyBinding, valueBinding, true); //原锟斤拷锟侥达拷锟斤拷
-			map = new StoredSortedMap<K, V>(store, keyBinding, valueBinding, true); // 希锟斤拷锟斤拷锟斤拷某锟斤拷锟斤拷锟�
+			map = new StoredSortedMap<QueryResultKey, Object>(store, keyBinding, valueBinding, true); // 希锟斤拷锟斤拷锟斤拷某锟斤拷锟斤拷锟�
 
 			// 锟酵放伙拷锟斤拷锟斤拷锟斤拷
 			// exampleEnv.syncReplication();
 
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 
 
-	public void set(K key, V value) {
-		if(map == null){
-		    synchronized(this){
-		        if(map == null){
-		        	initMap(key,value);
-		        }
-		    }
-		}
-		map.put(key, value);
-	}
-
-	public V get(String key) {
-		return  map.get(key);
-	}
+//	public void set(K key, V value) {
+//		if(map == null){
+//		    synchronized(this){
+//		        if(map == null){
+//		        	initMap(key,value);
+//		        }
+//		    }
+//		}
+//		map.put(key, value);
+//	}
+//
+//	public V get(String key) {
+//		return  map.get(key);
+//	}
 
 	 /* An instance of this class will be shared across multiple instances
 	   * of an LRUCache at the same time.  Make sure everything is thread safe.
@@ -135,6 +152,9 @@ public class BerkeleyCache<K, V> extends SolrCacheBase implements SolrCache<K,V>
 	    final int initialSize = Math.min(str==null ? 1024 : Integer.parseInt(str), limit);
 	    description = generateDescription(limit, initialSize);
 
+	    //init bdb
+	    initMap();
+		
 	    if (persistence==null) {
 	      // must be the first time a cache of this type is being created
 	      persistence = new CumulativeStats();
@@ -175,14 +195,24 @@ public class BerkeleyCache<K, V> extends SolrCacheBase implements SolrCache<K,V>
 	      // increment local inserts regardless of state???
 	      // it does make it more consistent with the current size...
 	      inserts++;
-	      return map.put(key,value);
+		
+	      return (V) map.put((QueryResultKey)key,value);
 	    }
 	  }
 
 	  @Override
 	  public V get(K key) {
-	    synchronized (map) {
-	      V val = map.get(key);
+//	    synchronized (map) {
+		  
+		  System.out.println();
+		  System.out.println(key.getClass().getName());
+		  System.out.println(key.toString());
+		  System.out.println()
+		  ;
+		  if(map.size()==0){
+			  return null;
+		  }
+	      Object val = map.get(key);
 	      if (getState() == State.LIVE) {
 	        // only increment lookups and hits if we are live.
 	        lookups++;
@@ -192,8 +222,8 @@ public class BerkeleyCache<K, V> extends SolrCacheBase implements SolrCache<K,V>
 	          stats.hits.incrementAndGet();
 	        }
 	      }
-	      return val;
-	    }
+	      return (V) val;
+//	    }
 	  }
 
 	  @Override
@@ -205,51 +235,51 @@ public class BerkeleyCache<K, V> extends SolrCacheBase implements SolrCache<K,V>
 
 	  @Override
 	  public void warm(SolrIndexSearcher searcher, SolrCache<K,V> old) {
-	    if (regenerator==null) return;
-	    long warmingStartTime = System.currentTimeMillis();
-	    LRUCache<K,V> other = (LRUCache<K,V>)old;
-
-	    // warm entries
-	    if (isAutowarmingOn()) {
-	      Object[] keys,vals = null;
-
-	      // Don't do the autowarming in the synchronized block, just pull out the keys and values.
-	      synchronized (other.map) {
-	        
-	        int sz = autowarm.getWarmCount(other.map.size());
-	        
-	        keys = new Object[sz];
-	        vals = new Object[sz];
-
-	        Iterator<Map.Entry<K, V>> iter = other.map.entrySet().iterator();
-
-	        // iteration goes from oldest (least recently used) to most recently used,
-	        // so we need to skip over the oldest entries.
-	        int skip = other.map.size() - sz;
-	        for (int i=0; i<skip; i++) iter.next();
-
-
-	        for (int i=0; i<sz; i++) {
-	          Map.Entry<K,V> entry = iter.next();
-	          keys[i]=entry.getKey();
-	          vals[i]=entry.getValue();
-	        }
-	      }
-
-	      // autowarm from the oldest to the newest entries so that the ordering will be
-	      // correct in the new cache.
-	      for (int i=0; i<keys.length; i++) {
-	        try {
-	          boolean continueRegen = regenerator.regenerateItem(searcher, this, old, keys[i], vals[i]);
-	          if (!continueRegen) break;
-	        }
-	        catch (Throwable e) {
-	          SolrException.log(log,"Error during auto-warming of key:" + keys[i], e);
-	        }
-	      }
-	    }
-
-	    warmupTime = System.currentTimeMillis() - warmingStartTime;
+//	    if (regenerator==null) return;
+//	    long warmingStartTime = System.currentTimeMillis();
+//	    BerkeleyCache<K,V> other = (BerkeleyCache<K,V>)old;
+//
+//	    // warm entries
+//	    if (isAutowarmingOn()) {
+//	      Object[] keys,vals = null;
+//
+//	      // Don't do the autowarming in the synchronized block, just pull out the keys and values.
+//	      synchronized (other.map) {
+//	        
+//	        int sz = autowarm.getWarmCount(other.map.size());
+//	        
+//	        keys = new Object[sz];
+//	        vals = new Object[sz];
+//
+//	        Iterator<Map.Entry<K, V>> iter = other.map.entrySet().iterator();
+//
+//	        // iteration goes from oldest (least recently used) to most recently used,
+//	        // so we need to skip over the oldest entries.
+//	        int skip = other.map.size() - sz;
+//	        for (int i=0; i<skip; i++) iter.next();
+//
+//
+//	        for (int i=0; i<sz; i++) {
+//	          Map.Entry<K,V> entry = iter.next();
+//	          keys[i]=entry.getKey();
+//	          vals[i]=entry.getValue();
+//	        }
+//	      }
+//
+//	      // autowarm from the oldest to the newest entries so that the ordering will be
+//	      // correct in the new cache.
+//	      for (int i=0; i<keys.length; i++) {
+//	        try {
+//	          boolean continueRegen = regenerator.regenerateItem(searcher, this, old, keys[i], vals[i]);
+//	          if (!continueRegen) break;
+//	        }
+//	        catch (Throwable e) {
+//	          SolrException.log(log,"Error during auto-warming of key:" + keys[i], e);
+//	        }
+//	      }
+//	    }
+//
+//	    warmupTime = System.currentTimeMillis() - warmingStartTime;
 	  }
 
 
@@ -309,9 +339,9 @@ public class BerkeleyCache<K, V> extends SolrCacheBase implements SolrCache<K,V>
 	  }
 	  
 	public static void main(String[] args) {
-		BerkeleyCache<String, String> cache = new BerkeleyCache<String, String>("g:/");
-		cache.set("key1", "data1");
-		cache.set("key1", "data2");
+		BerkeleyCache<String, String> cache = new BerkeleyCache<String, String>("z:/");
+		cache.put("key1", "data1");
+		cache.put("key1", "data2");
 		System.out.println(cache.get("key1"));
 		cache.close();
 
