@@ -228,6 +228,7 @@ public class MemcachedCache implements SolrCache, SolrEventListener {
 		 ***/
 	}
 
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public NamedList getStatistics() {
 		NamedList lst = new SimpleOrderedMap();
 		//synchronized (map) {
