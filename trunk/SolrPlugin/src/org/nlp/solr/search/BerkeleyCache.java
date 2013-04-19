@@ -2,6 +2,7 @@ package org.nlp.solr.search;
 
 import java.io.File;
 import java.util.Set;
+import java.util.SortedMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.solr.common.util.NamedList;
@@ -16,15 +17,11 @@ import org.slf4j.LoggerFactory;
 import com.sleepycat.bind.serial.SerialBinding;
 import com.sleepycat.bind.serial.StoredClassCatalog;
 import com.sleepycat.bind.tuple.TupleBinding;
-import com.sleepycat.collections.StoredMap;
 import com.sleepycat.collections.StoredSortedMap;
 import com.sleepycat.je.Database;
 import com.sleepycat.je.DatabaseConfig;
-import com.sleepycat.je.DatabaseEntry;
 import com.sleepycat.je.Environment;
 import com.sleepycat.je.EnvironmentConfig;
-import com.sleepycat.je.LockMode;
-import com.sleepycat.je.OperationStatus;
 
 public class BerkeleyCache<K, V> extends SolrCacheBase implements SolrCache<K, V> {
 
@@ -34,40 +31,53 @@ public class BerkeleyCache<K, V> extends SolrCacheBase implements SolrCache<K, V
 	private static final long serialVersionUID = 1L;
 	public static Logger log = LoggerFactory.getLogger(BerkeleyCache.class.getName());
 	// private StoredSortedMap<String, String> map;
-	StoredMap<String, Object> map;
+	StoredSortedMap<String, Object> map;
 
 	private Environment dbEnvironment;
 	private Database db;
 	private Database store;
-	private Database version;
 	private DatabaseConfig dbConfig;
-	private String cachePath = "g:/";
+	private String cachePath = "cache";
 	private final String databaseName = "Cache";
 	private String keyPrefix = "c";
 	private static String indexVersion = "0.0";
 
+	// private static int memCacheSize = 10240000;
+
 	public <EnvironmenConfig> void initMap() {
 
-		try {
+		try {			
 			EnvironmentConfig envConfig = new EnvironmentConfig();
+
 			envConfig.setTransactional(false);
 			envConfig.setAllowCreate(true);
 			File envDir = new File(this.cachePath);
+			if (!envDir.exists()){
+				envDir.mkdir();
+			}
+			// envConfig.setCacheSize(memCacheSize);
+			envConfig.setConfigParam("je.maxMemoryPercent", "10");
+			envConfig.setConfigParam("je.evictor.criticalPercentage", "10");
+			envConfig.setConfigParam("je.log.fileMax", "104857600");
+			envConfig.setConfigParam("je.log.useNIO", "true");
 			dbEnvironment = new Environment(envDir, envConfig);
 			dbConfig = new DatabaseConfig();
 			dbConfig.setAllowCreate(true);
 			dbConfig.setTransactional(false);
 			dbConfig.setSortedDuplicates(false);
+
 			db = dbEnvironment.openDatabase(null, databaseName, dbConfig);
 			// cacheConfig = dbEnvironment.openDatabase(null, databaseName,
 			// dbConfig);
-//			version = dbEnvironment.openDatabase(null, keyPrefix, dbConfig);
-			StoredClassCatalog catalog = new StoredClassCatalog(db);
+			// version = dbEnvironment.openDatabase(null, keyPrefix, dbConfig);
+			// StoredClassCatalog catalog = new StoredClassCatalog(db);
 			TupleBinding<String> keyBinding = TupleBinding.getPrimitiveBinding(String.class);
-			SerialBinding<Object> valueBinding = new SerialBinding<Object>(catalog, Object.class);
+			SerialBinding<Object> valueBinding = new SerialBinding<Object>(new StoredClassCatalog(db), Object.class);
 			store = dbEnvironment.openDatabase(null, databaseName, dbConfig);
 			map = new StoredSortedMap<String, Object>(store, keyBinding, valueBinding, true);
 			getCacheVersion();
+			dbEnvironment.cleanLog();
+
 			// dbEnvironment.syncReplication();
 
 		} catch (Exception e) {
@@ -75,24 +85,41 @@ public class BerkeleyCache<K, V> extends SolrCacheBase implements SolrCache<K, V
 		}
 	}
 
-	private boolean setCacheVersion() {		
-		OperationStatus status = version.put(null, new DatabaseEntry(keyPrefix.getBytes()), new DatabaseEntry(indexVersion.getBytes()));
-		if (status == OperationStatus.SUCCESS){
-			return true;
-		}else{
-			return false;
-		}
+	private void setCacheVersion() {
+
+		map.put(keyPrefix, (Object) indexVersion);
+		// OperationStatus status = version.put(null, new
+		// DatabaseEntry(keyPrefix.getBytes()), new
+		// DatabaseEntry(indexVersion.getBytes()));
+		// if (status == OperationStatus.SUCCESS){
+		// return true;
+		// }else{
+		// return false;
+		// }
 	}
-	
-	private void getCacheVersion() {		
-		DatabaseEntry value = new DatabaseEntry();
-		OperationStatus status = version.get(null, new DatabaseEntry(keyPrefix.getBytes()), value, LockMode.DEFAULT);
-		if (status == OperationStatus.KEYEXIST) {
-			indexVersion =  new String(value.getData());
-		}else{
+
+	private void getCacheVersion() {
+
+		// indexVersion = (String) map.get(keyPrefix) == null ? "0.0" : (String)
+		// map.get(keyPrefix);
+
+		String version = (String) map.get(keyPrefix);
+		if (version == null) {
 			setCacheVersion();
+		} else {
+			indexVersion = version;
+			log.info("getCacheVersion " + indexVersion);
 		}
-	}	
+
+		// DatabaseEntry value = new DatabaseEntry();
+		// OperationStatus status = version.get(null, new
+		// DatabaseEntry(keyPrefix.getBytes()), value, LockMode.DEFAULT);
+		// if (status == OperationStatus.KEYEXIST) {
+		// indexVersion = new String(value.getData());
+		// }else{
+		// setCacheVersion();
+		// }
+	}
 
 	/*
 	 * An instance of this class will be shared across multiple instances of an
@@ -123,15 +150,21 @@ public class BerkeleyCache<K, V> extends SolrCacheBase implements SolrCache<K, V
 	public Object init(java.util.Map args, Object persistence, CacheRegenerator regenerator) {
 		super.init(args, regenerator);
 
+		String name = (String) args.get("name");
+		if(name!=null){
+			cachePath += name;
+		}
+		System.out.println(name+"............................................");
+		
 		String prefix = (String) args.get("keyPrefix");
 		if (prefix != null) {
 			keyPrefix = prefix;
 		}
 
-		String path = (String) args.get("cachePath");
-		if (path != null) {
-			cachePath = path;
-		}
+//		String path = (String) args.get("cachePath");
+//		if (path != null) {
+//			cachePath = path;
+//		}
 		description = generateDescription(keyPrefix, cachePath);
 
 		// init map
@@ -180,13 +213,13 @@ public class BerkeleyCache<K, V> extends SolrCacheBase implements SolrCache<K, V
 		// increment local inserts regardless of state???
 		// it does make it more consistent with the current size...
 		inserts++;
-		if (map == null) {
-			synchronized (this) {
-				if (map == null) {
-					initMap();
-				}
-			}
-		}
+		// if (map == null) {
+		// synchronized (this) {
+		// if (map == null) {
+		// initMap();
+		// }
+		// }
+		// }
 		return (V) map.put(toKeyString(key), value);
 		// }
 	}
@@ -226,18 +259,23 @@ public class BerkeleyCache<K, V> extends SolrCacheBase implements SolrCache<K, V
 		// }
 	}
 
-
 	@Override
 	public void warm(SolrIndexSearcher searcher, SolrCache<K, V> old) {
-		indexVersion = searcher.getVersion();		
-		Set<String> keySet = map.keySet();
-		for (String k : keySet) {
-			if (!k.startsWith(keyPrefix + indexVersion)) {
-//				map.remove(k);
-			}
-		}
-		dbEnvironment.cleanLog();
+		indexVersion = searcher.getVersion();
+		// Set<String> keySet = map.keySet();
+		// for (String k : keySet) {
+		// if (!k.startsWith(keyPrefix + indexVersion)) {
+		// map.remove(k);
+		// }
+		// }
+		// dbEnvironment.cleanLog();
 		setCacheVersion();
+		SortedMap<String, Object> subMap = map.subMap(keyPrefix + "0.0", keyPrefix + indexVersion);
+		Set<String> keySet = subMap.keySet();
+		for (String string : keySet) {
+			System.out.println("removeing ..." + string);
+			map.remove(string);
+		}
 		log.info("warm index version=" + indexVersion + "....................................................................");
 	}
 
@@ -298,9 +336,7 @@ public class BerkeleyCache<K, V> extends SolrCacheBase implements SolrCache<K, V
 
 	public static void main(String[] args) {
 		BerkeleyCache<String, String> cache = new BerkeleyCache<String, String>();
-		cache.put("key1", "data1");
-		cache.put("key1", "data2");
-		System.out.println(cache.get("key1"));
+		cache.initMap();
 		cache.close();
 
 	}
