@@ -7,6 +7,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.solr.common.util.NamedList;
 import org.apache.solr.common.util.SimpleOrderedMap;
+import org.apache.solr.core.SolrEventListener;
+import org.apache.solr.core.SolrResourceLoader;
 import org.apache.solr.search.CacheRegenerator;
 import org.apache.solr.search.SolrCache;
 import org.apache.solr.search.SolrCacheBase;
@@ -23,7 +25,7 @@ import com.sleepycat.je.DatabaseConfig;
 import com.sleepycat.je.Environment;
 import com.sleepycat.je.EnvironmentConfig;
 
-public class BerkeleyCache<K, V> extends SolrCacheBase implements SolrCache<K, V> {
+public class BerkeleyCache<K, V> extends SolrCacheBase implements SolrCache<K, V>, SolrEventListener {
 
 	/**
 	 * 
@@ -38,7 +40,7 @@ public class BerkeleyCache<K, V> extends SolrCacheBase implements SolrCache<K, V
 	private Database store;
 	private DatabaseConfig dbConfig;
 	private String cachePath = "cache";
-	private final String databaseName = "Cache";
+	private String databaseName = "Cache";
 	private String keyPrefix = "c";
 	private static String indexVersion = "0.0";
 
@@ -46,13 +48,17 @@ public class BerkeleyCache<K, V> extends SolrCacheBase implements SolrCache<K, V
 
 	public <EnvironmenConfig> void initMap() {
 
-		try {			
+		try {
 			EnvironmentConfig envConfig = new EnvironmentConfig();
 
 			envConfig.setTransactional(false);
 			envConfig.setAllowCreate(true);
+			
 			File envDir = new File(this.cachePath);
-			if (!envDir.exists()){
+			SolrResourceLoader.normalizeDir(this.cachePath);
+			log.info(SolrResourceLoader.locateSolrHome() + ".............................."+SolrResourceLoader.normalizeDir(this.cachePath));
+			System.out.println(SolrResourceLoader.locateSolrHome() + ".............................."+SolrResourceLoader.normalizeDir(this.cachePath));
+			if (!envDir.exists()) {
 				envDir.mkdir();
 			}
 			// envConfig.setCacheSize(memCacheSize);
@@ -150,21 +156,21 @@ public class BerkeleyCache<K, V> extends SolrCacheBase implements SolrCache<K, V
 	public Object init(java.util.Map args, Object persistence, CacheRegenerator regenerator) {
 		super.init(args, regenerator);
 
-		String name = (String) args.get("name");
-		if(name!=null){
-			cachePath += name;
-		}
-		System.out.println(name+"............................................");
-		
+		// String name = (String) args.get("name");
+		// if(name!=null){
+		// cachePath += name;
+		// }
+		System.out.println(args + "............................................");
+
 		String prefix = (String) args.get("keyPrefix");
 		if (prefix != null) {
 			keyPrefix = prefix;
 		}
-
-//		String path = (String) args.get("cachePath");
-//		if (path != null) {
-//			cachePath = path;
-//		}
+		
+		 String path = (String) args.get("cachePath");
+		 if (path != null) {
+		 cachePath = path;
+		 }
 		description = generateDescription(keyPrefix, cachePath);
 
 		// init map
@@ -232,9 +238,11 @@ public class BerkeleyCache<K, V> extends SolrCacheBase implements SolrCache<K, V
 	@Override
 	public V get(K key) {
 		// synchronized (map) {
+		if (key instanceof String) {
+			log.info("String:" + key);
+		}
 
-		System.out.println(toKeyString(key));
-		log.info(toKeyString(key));
+		log.info(key.getClass().getName() + ":" + toKeyString(key) + "........." + key.toString());
 		if (map == null || map.size() == 0) {
 			return null;
 		}
@@ -261,6 +269,7 @@ public class BerkeleyCache<K, V> extends SolrCacheBase implements SolrCache<K, V
 
 	@Override
 	public void warm(SolrIndexSearcher searcher, SolrCache<K, V> old) {
+		searcher.getCore().getName();
 		indexVersion = searcher.getVersion();
 		// Set<String> keySet = map.keySet();
 		// for (String k : keySet) {
@@ -276,7 +285,8 @@ public class BerkeleyCache<K, V> extends SolrCacheBase implements SolrCache<K, V
 			System.out.println("removeing ..." + string);
 			map.remove(string);
 		}
-		log.info("warm index version=" + indexVersion + "....................................................................");
+		log.info("warm index Core = " + searcher.getCore().getName() + "version=" + indexVersion
+				+ "....................................................................");
 	}
 
 	@Override
@@ -314,18 +324,19 @@ public class BerkeleyCache<K, V> extends SolrCacheBase implements SolrCache<K, V
 		lst.add("hitratio", calcHitRatio(lookups, hits));
 		lst.add("inserts", inserts);
 		lst.add("evictions", evictions);
-		lst.add("size", map.size());
+		if (map != null)
+			lst.add("size", map.size());
 		// }
 		lst.add("warmupTime", warmupTime);
-
-		long clookups = stats.lookups.get();
-		long chits = stats.hits.get();
-		lst.add("cumulative_lookups", clookups);
-		lst.add("cumulative_hits", chits);
-		lst.add("cumulative_hitratio", calcHitRatio(clookups, chits));
-		lst.add("cumulative_inserts", stats.inserts.get());
-		lst.add("cumulative_evictions", stats.evictions.get());
-
+		if (stats != null) {
+			long clookups = stats.lookups.get();
+			long chits = stats.hits.get();
+			lst.add("cumulative_lookups", clookups);
+			lst.add("cumulative_hits", chits);
+			lst.add("cumulative_hitratio", calcHitRatio(clookups, chits));
+			lst.add("cumulative_inserts", stats.inserts.get());
+			lst.add("cumulative_evictions", stats.evictions.get());
+		}
 		return lst;
 	}
 
@@ -339,5 +350,29 @@ public class BerkeleyCache<K, V> extends SolrCacheBase implements SolrCache<K, V
 		cache.initMap();
 		cache.close();
 
+	}
+
+	@Override
+	public void init(NamedList args) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void postCommit() {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void postSoftCommit() {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void newSearcher(SolrIndexSearcher newSearcher, SolrIndexSearcher currentSearcher) {
+		// cachePath += newSearcher.getCore().getName();
+		System.out.println(newSearcher.getCore().getName() + "....................................." + cachePath);
 	}
 }
