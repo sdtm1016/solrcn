@@ -93,7 +93,7 @@ public class CategorizeDocumentFactory extends UpdateRequestProcessorFactory
             String outputField = params.get("outputField");
             String input = (String) doc.getFieldValue(inputField);
             ArrayList<String> tokenList = new ArrayList<String>(256);
-            analyzer = new StandardAnalyzer(Version.LUCENE_40);
+            analyzer = new StandardAnalyzer(Version.LUCENE_41);
             TokenStream ts = analyzer.tokenStream(inputField, new StringReader(input));
             while (ts.incrementToken()) {
                 tokenList.add(ts.getAttribute(CharTermAttribute.class).toString());
