@@ -1,12 +1,16 @@
 package cc.solr;
+
 import java.io.IOException;
 import java.util.ArrayList;
 
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
+import org.apache.lucene.document.LongField;
 import org.apache.lucene.document.StringField;
+import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
@@ -25,12 +29,11 @@ public class testLuceneHDFS {
 
 	public static void Index() {
 		IndexWriter writer;
-		IndexWriterConfig iwc = new IndexWriterConfig(Version.LUCENE_41,
-				new StandardAnalyzer(Version.LUCENE_41));
+		IndexWriterConfig iwc = new IndexWriterConfig(Version.LUCENE_41, new WhitespaceAnalyzer(Version.LUCENE_41));
 		iwc.setMergePolicy(NoMergePolicy.NO_COMPOUND_FILES);
 		iwc.setRAMBufferSizeMB(512);
-		
-		org.apache.blur.store.hdfs.HdfsDirectory directory = null;	
+
+		org.apache.blur.store.hdfs.HdfsDirectory directory = null;
 		try {
 			directory = new org.apache.blur.store.hdfs.HdfsDirectory("hdfs://master:9000/user/KmaDou/index2");
 			directory.setLockFactory(NoLockFactory.getNoLockFactory());
@@ -45,27 +48,25 @@ public class testLuceneHDFS {
 			for (int j = 0; j < 100; j++) {
 				for (int i = 0; i < 100000; i++) {
 					Document doc = new Document();
-					doc.add(new StringField("id", "id" + i, Field.Store.YES));
-					doc.add(new StringField("title", "title" + i,
-							Field.Store.YES));
+					doc.add(new StringField("id", "" + i, Field.Store.YES));
+					doc.add(new StringField("title", "title" + i, Field.Store.YES));
+					doc.add(new TextField("desctrip", "中华 人民 共和国", Field.Store.YES));
+					doc.add(new TextField("text", "MaxSkipLevels is the max. number of skip levels stored for each term in the .frq file. A low value results in smaller indexes but less acceleration, a larger value results in slightly larger indexes but greater acceleration. See format of .frq file for more information about skip levels.", Field.Store.YES));
+					doc.add(new LongField("_VERSION_", System.currentTimeMillis(), Field.Store.YES));
 					docs.add(doc);
 					count++;
 					// writer.addDocument(doc);
 				}
 				writer.addDocuments(docs);
 				docs.clear();
-				System.out
-						.format("add data [%s] ok... %s ms,%sper/sec\n",
-								count,
-								(System.currentTimeMillis() - tagTime),
-								(count * 1000 / (System.currentTimeMillis() - tagTime)));
+				System.out.format("add data [%s] ok... %s ms,%sper/sec\n", count, (System.currentTimeMillis() - tagTime),
+						(count * 1000 / (System.currentTimeMillis() - tagTime)));
 			}
 
 			tagTime = System.currentTimeMillis();
 			System.out.println("start commit... ");
 			writer.commit();
-			System.out.println("commit ok... "
-					+ (System.currentTimeMillis() - tagTime));
+			System.out.println("commit ok... " + (System.currentTimeMillis() - tagTime));
 
 			writer.close();
 		} catch (IOException e) {
@@ -99,8 +100,7 @@ public class testLuceneHDFS {
 				String path = doc.get("id");
 				System.out.println(path);
 			}
-		
-			
+
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (ParseException e) {
