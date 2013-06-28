@@ -28,7 +28,7 @@ public class LuceneHDFSSearcher {
 	public Document search(String value) throws CorruptIndexException,
 			IOException {
 		Query query = null;
-		Term term = new Term("value", value);
+		Term term = new Term("zip", value);
 		query = new TermQuery(term);
 
 		Document doc = null;
@@ -47,7 +47,7 @@ public class LuceneHDFSSearcher {
 	public static void main(String arg[]) throws IOException {
 		Configuration conf = new Configuration();
 		FileSystem fs = FileSystem.get(conf);
-		String index= "hdfs://master:9000/IndexFiles/";
+		String index= "hdfs://master:9000/index/";
 //		FSDirectory dir = new FSDirectory(fs, new Path( "hdfs://125.223.118.44:9000/IndexFiles/"), false, conf);
 		FSDirectory dir = FSDirectory.open(new File(index));
 		// System.out.println(dir.getLockID().toString());
