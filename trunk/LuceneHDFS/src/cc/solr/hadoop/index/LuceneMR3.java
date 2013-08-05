@@ -28,24 +28,22 @@ import org.apache.lucene.analysis.cjk.CJKAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.LongField;
-import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
-import org.apache.lucene.index.NoMergePolicy;
 import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.RAMDirectory;
+import org.apache.lucene.store.NoLockFactory;
 import org.apache.lucene.util.Version;
 
-import cc.solr.lucene.store.lock.HDFSLockFactory;
+import cc.solr.lucene.hdfsro.WHdfsDirectory;
 
-public class LuceneMR2 extends Configured implements Tool {
+public class LuceneMR3 extends Configured implements Tool {
 
 	public static class MapClass extends Mapper<LongWritable, Text, NullWritable, NullWritable> {
 
 		ArrayList<Document> docs = new ArrayList<Document>();
 		Directory ramDirectory;
-		cc.solr.lucene.store.hdfs.HdfsDirectory directory;
+		WHdfsDirectory directory;
 		String outputDir;
 		IndexWriter writer;
 		IndexWriter ramWriter;
@@ -61,57 +59,48 @@ public class LuceneMR2 extends Configured implements Tool {
 			InputSplit inputSplit = context.getInputSplit();
 			fileName = ((FileSplit) inputSplit).getPath().toString();
 
-			IndexWriterConfig ramIwc = new IndexWriterConfig(matchVersion, new CJKAnalyzer(matchVersion));
-			ramIwc.setMaxBufferedDocs(Integer.MAX_VALUE);
-			ramIwc.setRAMBufferSizeMB(512);
-			
-			ramDirectory = new RAMDirectory();
-			ramWriter = new IndexWriter(ramDirectory, ramIwc);
+			IndexWriterConfig iwc = new IndexWriterConfig(matchVersion, new CJKAnalyzer(matchVersion));
+			iwc.setMaxBufferedDocs(Integer.MAX_VALUE);
+			iwc.setRAMBufferSizeMB(512);
+			directory = new WHdfsDirectory("hdfs://master:9000/"+outputDir);
+			directory.setLockFactory(NoLockFactory.getNoLockFactory());
+			writer = new IndexWriter(directory, iwc);
 		}
 
 		@Override
 		public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
 
 			Document doc = new Document();
-			doc.add(new StringField("id", fileName + key.toString(), Field.Store.YES));
+
+			doc.add(new TextField("id", fileName + key.toString(), Field.Store.YES));
 			String[] str = value.toString().split("\t");
 
 			for (int i = 0; i < str.length; i++) {
 				if (str[i].trim().isEmpty())
 					continue;
 				doc.add(new TextField("data_" + i + "_cjk", str[i], Field.Store.YES));
-//				doc.add(new TextField("data_cjk",new CJKTokenizer(new StringReader("data"))));
 			}
-			
+
 			doc.add(new LongField("_version_", 1L, Field.Store.YES));
 
 			docs.add(doc);
 
 			if (docs.size() > 10000) {
-				ramWriter.addDocuments(docs);
+				writer.addDocuments(docs);
 				docs.clear();
 			}
 		}
 
 		@Override
 		public void cleanup(Context context) throws IOException {
+
 			if (docs.size() > 0) {
-				ramWriter.addDocuments(docs);
-				ramWriter.commit();				
-				directory = new cc.solr.lucene.store.hdfs.HdfsDirectory(outputDir);
-				HDFSLockFactory hdfsLockFactory = new HDFSLockFactory(context.getConfiguration(), new Path(outputDir), "", 0);
-				directory.setLockFactory(hdfsLockFactory);
-//				directory.setLockFactory(NoLockFactory.getNoLockFactory());
-				IndexWriterConfig iwc = new IndexWriterConfig(matchVersion, new CJKAnalyzer(matchVersion));
-				iwc.setMergePolicy(NoMergePolicy.NO_COMPOUND_FILES);
-				iwc.setRAMBufferSizeMB(512);
-				writer = new IndexWriter(directory, iwc);				
-				writer.addIndexes(ramDirectory);				
-				writer.commit();
-				ramWriter.close();
-				writer.close();
+				writer.addDocuments(docs);
 				docs.clear();
 			}
+
+			writer.commit();
+			writer.close();
 		}
 	}
 
@@ -165,7 +154,7 @@ public class LuceneMR2 extends Configured implements Tool {
 			System.exit(2);
 		}
 		Job job = new Job(conf, "Lucene Index");
-		job.setJarByClass(LuceneMR2.class);
+		job.setJarByClass(LuceneMR3.class);
 		FileInputFormat.addInputPath(job, new Path(otherArgs[0]));
 		FileOutputFormat.setOutputPath(job, new Path(otherArgs[1]));
 		job.setMapperClass(MapClass.class);
@@ -187,7 +176,7 @@ public class LuceneMR2 extends Configured implements Tool {
 	}
 
 	public static void main(String[] args) throws Exception {
-		int res = ToolRunner.run(new Configuration(), new LuceneMR2(), args);
+		int res = ToolRunner.run(new Configuration(), new LuceneMR3(), args);
 		System.exit(res);
 	}
 

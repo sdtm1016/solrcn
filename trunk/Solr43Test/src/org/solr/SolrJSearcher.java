@@ -10,7 +10,7 @@ import org.apache.solr.common.params.ModifiableSolrParams;
 
 public class SolrJSearcher {
 	public static void main(String[] args) throws MalformedURLException, SolrServerException {
-		HttpSolrServer solr = new HttpSolrServer("http://localhost:8983/solr");
+		HttpSolrServer solr = new HttpSolrServer("http://www.solr.cc:8080/solr");
 
 		ModifiableSolrParams params = new ModifiableSolrParams();
 		params.set("q", "cat:electronics");

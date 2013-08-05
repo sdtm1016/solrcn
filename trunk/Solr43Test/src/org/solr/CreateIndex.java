@@ -32,8 +32,8 @@ public class CreateIndex {
 	static long tagTime;
 	final static Random rnd = new Random();
 
-	static String Base_URL = "http://localhost:8080/solr/collection1";
-	static String zkHost = "localhost:2181";
+	static String Base_URL = "http://localhost:8983/solr/collection1";
+	static String zkHost = "localhost:9983";
 	static String defaultCollection = "collection1";
 	static int zkClientTimeout = 60000;
 	static int zkConnectTimeout = 5000;
@@ -148,8 +148,10 @@ public class CreateIndex {
 
 				SolrInputDocument doc = new SolrInputDocument();
 //				doc.setField("id", java.util.UUID.randomUUID());
-				doc.setField("id", "abcdefghijklmnopqrstuvwxyz0123456789"+i);
+				doc.setField("id", count);
+				doc.setField("txt_en", "hello world");
 				doc.setField("name_s", "name_" + type);
+				doc.setDocumentBoost((float) (Math.sqrt(count)*10000));
 				docs.add(doc);
 				count++;
 			}
@@ -187,18 +189,18 @@ public class CreateIndex {
 				SolrInputDocument doc = new SolrInputDocument();
 				doc.setField("id", count);
 				doc.setDocumentBoost((float)count/200000);
-				System.out.println(doc.getDocumentBoost());
+//				System.out.println(doc.getDocumentBoost());
 				// doc.setField("_shard_", "shard" + String.valueOf(((count %
 				// Dict.size()) % 5000) + 1));
 				// doc.setField("type_i", count % 7);
 				// doc.setField("name_s",
-				// "english name �л����񹲺͹�,english name �л����񹲺͹�");// +
+				// "english name 锟叫伙拷锟斤拷锟今共和癸拷,english name 锟叫伙拷锟斤拷锟今共和癸拷");// +
 				// System.currentTimeMillis());
 				// doc.setField("name_s", Dict.get((int) (count %
 				// Dict.size())));
 				doc.setField("name_s", count % 5000);
 				doc.setField("contnet_en", "hello wrold");
-//				doc.setField("_shard_", "shard" + (i % 6 + 1) );
+				doc.setField("_shard_", "shard" + (i % 6 + 1) );
 				doc.setField("_shard_", "shard1");
 				docs.add(doc);
 				count++;
@@ -300,8 +302,8 @@ public class CreateIndex {
 
 	}
 	
-	static int count = 20;
-	static int request = 10000;
+	static int count = 200;
+	static int request = 100000;
 	static int type = 1;
 	static int m = 1;
 	
@@ -315,9 +317,6 @@ public class CreateIndex {
 			CloudRun(request, count);
 			break;
 		case 2:
-			MultiRun(request, count, m);
-			break;
-		case 3:
 			MultiRun(request, count, m);
 			break;
 		default:
