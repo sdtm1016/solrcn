@@ -18,6 +18,7 @@ public class WHdfsDirectory extends Directory {
 
 	Path path;
 	FileSystem fs;
+	Configuration config;
 
 	public WHdfsDirectory() {
 		this.fs = getFileSystem("localhost", 9000);
@@ -29,7 +30,10 @@ public class WHdfsDirectory extends Directory {
 			this.path = fs.getWorkingDirectory();
 		}else if (path.startsWith("/")){
 			this.path = new Path(path);
-		}else{
+		}else if(path.startsWith("hdfs://")){
+			
+		}
+		else{
 			this.path = new Path(fs.getWorkingDirectory() + "/" + path);
 		}
 		try {
@@ -40,13 +44,16 @@ public class WHdfsDirectory extends Directory {
 		}
 	}
 	
-	public WHdfsDirectory(String path) {
-		this.fs = getFileSystem("localhost", 9000);
-		ensurePath(path);
+	public WHdfsDirectory(String hdfsurl) throws IOException {
+		config = new Configuration();
+//		config.set("fs.default.name", hdfsurl);
+		path = new Path(hdfsurl);
+		fs = FileSystem.get(path.toUri(),config);
+//		ensurePath(hdfsurl);
 	}
 
 	public WHdfsDirectory(String url, String path) {
-		Configuration config = new Configuration();
+		config = new Configuration();
 		config.set("fs.default.name", url);
 		try {
 			this.fs = FileSystem.get(config);

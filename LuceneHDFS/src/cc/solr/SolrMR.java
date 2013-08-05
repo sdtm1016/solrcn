@@ -1,7 +1,11 @@
-package cc.solr.hadoop.index;
+package cc.solr;
+
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -23,95 +27,118 @@ import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
-import org.apache.hadoop.util.hash.Hash;
-import org.apache.lucene.analysis.cjk.CJKAnalyzer;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.document.LongField;
-import org.apache.lucene.document.StringField;
-import org.apache.lucene.document.TextField;
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.IndexWriterConfig;
-import org.apache.lucene.index.NoMergePolicy;
-import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.RAMDirectory;
-import org.apache.lucene.util.Version;
+import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.impl.CloudSolrServer;
+import org.apache.solr.common.SolrInputDocument;
 
-import cc.solr.lucene.store.lock.HDFSLockFactory;
-
-public class LuceneMR2 extends Configured implements Tool {
+public class SolrMR extends Configured implements Tool {
 
 	public static class MapClass extends Mapper<LongWritable, Text, NullWritable, NullWritable> {
 
-		ArrayList<Document> docs = new ArrayList<Document>();
-		Directory ramDirectory;
-		cc.solr.lucene.store.hdfs.HdfsDirectory directory;
-		String outputDir;
-		IndexWriter writer;
-		IndexWriter ramWriter;
+		ArrayList<SolrInputDocument> docs = new ArrayList<SolrInputDocument>();
+		CloudSolrServer[] servers;
+		int collectionNums = 1;
 		String fileName;
-		Version matchVersion = Version.LUCENE_43;
+		String zkHost = "localhost:2181";
+		String collection = "collection";
+		int shard = 0;
+		int shardNums = 6;
+		Calendar calendar = Calendar.getInstance();
+		long timeInMillis;
+		final long day = 86400000;
+		
+		public void commit(){
 
+		}
+		
 		@Override
-		public void setup(Context context) throws IOException {
-			java.util.Random r=new java.util.Random(); 
-			Hash instance = Hash.getInstance(Hash.MURMUR_HASH);			
-			String hash = String.valueOf(Math.abs(instance.hash((System.currentTimeMillis() + "_" + r.nextLong()).getBytes())));
-			outputDir = context.getConfiguration().get("mapred.output.dir") + "/index_" + hash;
+		public void setup(Context context) {
+			zkHost = context.getConfiguration().get("zkhost","localhost:2181");
+			collectionNums = context.getConfiguration().getInt("collectionNums", 1);
+			shardNums = context.getConfiguration().getInt("shardNums", 1);
+			servers = new CloudSolrServer[collectionNums];
+			calendar.set(2013, 6, 1, 0, 0, 0);
+			timeInMillis = calendar.getTimeInMillis();
+			
 			InputSplit inputSplit = context.getInputSplit();
 			fileName = ((FileSplit) inputSplit).getPath().toString();
-
-			IndexWriterConfig ramIwc = new IndexWriterConfig(matchVersion, new CJKAnalyzer(matchVersion));
-			ramIwc.setMaxBufferedDocs(Integer.MAX_VALUE);
-			ramIwc.setRAMBufferSizeMB(512);
 			
-			ramDirectory = new RAMDirectory();
-			ramWriter = new IndexWriter(ramDirectory, ramIwc);
+			try {
+				for (int i = 0; i < servers.length; i++) {
+					servers[i] = new CloudSolrServer(zkHost);
+					servers[i].setDefaultCollection(collection+(i+1));					
+				}
+			} catch (MalformedURLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
 		}
 
 		@Override
 		public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
 
-			Document doc = new Document();
-			doc.add(new StringField("id", fileName + key.toString(), Field.Store.YES));
+			long rows = Long.parseLong(key.toString());
+			int shardid = (int) ((rows % shardNums) + 1);
+			long boost = timeInMillis + ((shardid-1) * day) + rows % 86400;
+			
+			SolrInputDocument doc = new SolrInputDocument();
+			doc.setField("id", fileName + key.toString());			
+			doc.setField("_shard_", "shard" + shardid);
+			doc.setDocumentBoost(rows);
+			doc.setField("time_dt", new Date(boost));
+			doc.setField("rows_s", rows);
+			
 			String[] str = value.toString().split("\t");
 
 			for (int i = 0; i < str.length; i++) {
-				if (str[i].trim().isEmpty())
+				if(str[i].trim().isEmpty())
 					continue;
-				doc.add(new TextField("data_" + i + "_cjk", str[i], Field.Store.YES));
-//				doc.add(new TextField("data_cjk",new CJKTokenizer(new StringReader("data"))));
+				doc.setField("data_" + i + "_cjk", str[i]);
 			}
 			
-			doc.add(new LongField("_version_", 1L, Field.Store.YES));
-
 			docs.add(doc);
 
-			if (docs.size() > 10000) {
-				ramWriter.addDocuments(docs);
+			if (docs.size() > 1000) {
+				
+				try {
+					
+					for (int i = 0; i < servers.length; i++) {
+						long now = i*day*shardNums;					
+						for (int j = 0,len = docs.size(); j < len; j++) {
+							long newtime = (long) docs.get(i).getDocumentBoost();
+							docs.get(i).setDocumentBoost(now + newtime);
+							docs.get(i).setField("time_dt", new Date(now+newtime));
+						}
+						servers[i].add(docs, 15000);
+					}
+					
+				} catch (SolrServerException e) {
+					e.printStackTrace();
+				}
+				
 				docs.clear();
+				
 			}
 		}
 
 		@Override
-		public void cleanup(Context context) throws IOException {
+		public void cleanup(Context context) {
 			if (docs.size() > 0) {
-				ramWriter.addDocuments(docs);
-				ramWriter.commit();				
-				directory = new cc.solr.lucene.store.hdfs.HdfsDirectory(outputDir);
-				HDFSLockFactory hdfsLockFactory = new HDFSLockFactory(context.getConfiguration(), new Path(outputDir), "", 0);
-				directory.setLockFactory(hdfsLockFactory);
-//				directory.setLockFactory(NoLockFactory.getNoLockFactory());
-				IndexWriterConfig iwc = new IndexWriterConfig(matchVersion, new CJKAnalyzer(matchVersion));
-				iwc.setMergePolicy(NoMergePolicy.NO_COMPOUND_FILES);
-				iwc.setRAMBufferSizeMB(512);
-				writer = new IndexWriter(directory, iwc);				
-				writer.addIndexes(ramDirectory);				
-				writer.commit();
-				ramWriter.close();
-				writer.close();
+
+				try {
+					for (int i = 0; i < servers.length; i++) {
+						servers[i].add(docs, 15000);
+					}
+				} catch (SolrServerException e) {
+					e.printStackTrace();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+
 				docs.clear();
 			}
+			
 		}
 	}
 
@@ -156,21 +183,24 @@ public class LuceneMR2 extends Configured implements Tool {
 		return new Configuration();
 	}
 
-	@Override
 	public int run(String[] args) throws Exception {
+		String ver = "1";
 		Configuration conf = getConf();
 		String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
-		if (otherArgs.length != 2) {
-			System.err.println("Usage: LuceneMR <in> <out>");
+		if (otherArgs.length < 2) {
+			System.err.println("Usage: SolrMR <in> <out> [zkHost] [collectionNums] [shardNums]");
 			System.exit(2);
 		}
-		Job job = new Job(conf, "Lucene Index");
-		job.setJarByClass(LuceneMR2.class);
+		conf.set("zkhost", otherArgs[2]);
+		conf.set("collectionNums", otherArgs[3]);
+		conf.set("shardNums", otherArgs[4]);
+		Job job = new Job(conf, "Solr Index v"+ver);
+		job.setJarByClass(SolrMR.class);
 		FileInputFormat.addInputPath(job, new Path(otherArgs[0]));
 		FileOutputFormat.setOutputPath(job, new Path(otherArgs[1]));
-		job.setMapperClass(MapClass.class);
-		job.setMapOutputKeyClass(NullWritable.class);
-		job.setMapOutputValueClass(NullWritable.class);
+		job.setMapperClass(MapClass.class);		
+		// job.setMapOutputKeyClass(NullWritable.class);
+		// job.setMapOutputValueClass(NullWritable.class);
 		// //job.setCombinerClass(Reduce.class);
 		// job.setPartitionerClass(AgePartitioner.class);
 		// job.setReducerClass(Reduce.class);
@@ -187,7 +217,7 @@ public class LuceneMR2 extends Configured implements Tool {
 	}
 
 	public static void main(String[] args) throws Exception {
-		int res = ToolRunner.run(new Configuration(), new LuceneMR2(), args);
+		int res = ToolRunner.run(new Configuration(), new SolrMR(), args);
 		System.exit(res);
 	}
 
