@@ -33,7 +33,7 @@ public class CreateIndex {
 	final static Random rnd = new Random();
 
 	static String Base_URL = "http://localhost:8983/solr/collection1";
-	static String zkHost = "localhost:9983";
+	static String zkHost = "localhost:2181";
 	static String defaultCollection = "collection1";
 	static int zkClientTimeout = 60000;
 	static int zkConnectTimeout = 5000;
@@ -200,8 +200,7 @@ public class CreateIndex {
 				// Dict.size())));
 				doc.setField("name_s", count % 5000);
 				doc.setField("contnet_en", "hello wrold");
-				doc.setField("_shard_", "shard" + (i % 6 + 1) );
-				doc.setField("_shard_", "shard1");
+				doc.setField("_shard_", "shard" + (i % 3 + 1) );
 				docs.add(doc);
 				count++;
 			}
@@ -302,7 +301,7 @@ public class CreateIndex {
 
 	}
 	
-	static int count = 200;
+	static int count = 2;
 	static int request = 100000;
 	static int type = 1;
 	static int m = 1;
