@@ -23,7 +23,7 @@ import cc.solr.lucene.hdfsro.WHdfsDirectory;
 
 public class LuceneHDFSMarger {
 
-	public static void main(String[] args) throws IOException, ParseException {
+	public static void DownloadIndex() throws IOException, ParseException{
 		Version matchVersion = Version.LUCENE_43;
 		System.out.println("start....");
 		long tagTime = System.currentTimeMillis();
@@ -58,6 +58,11 @@ public class LuceneHDFSMarger {
 		Document doc = searcher.doc(hits[hits.length - 1].doc);
 		String path = doc.get("id");
 		System.out.println(path);
+	}
+	
+	
+	public static void main(String[] args) throws IOException, ParseException {
+		DownloadIndex();
 
 	}
 }

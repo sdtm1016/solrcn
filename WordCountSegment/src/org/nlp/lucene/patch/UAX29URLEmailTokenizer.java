@@ -113,7 +113,7 @@ public final class UAX29URLEmailTokenizer extends Tokenizer {
    * Creates a new UAX29URLEmailTokenizer with a given {@link AttributeSource}. 
    */
   public UAX29URLEmailTokenizer(Version matchVersion, AttributeSource source, Reader input) {
-    super(source, input);
+    super(input);
     this.scanner = getScannerFor(matchVersion, input);
   }
 

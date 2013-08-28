@@ -6,10 +6,10 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.apache.lucene.analysis.Tokenizer;
+import org.apache.lucene.analysis.cn.smart.WordTokenFilter;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
 import org.apache.lucene.analysis.tokenattributes.TypeAttribute;
-import org.apache.lucene.util.AttributeSource;
 import org.nlp.impl.BloomSegmentImpl;
 import org.nlp.impl.TokendWords;
 
@@ -65,10 +65,6 @@ public final class BloomSegmentTokenizer extends Tokenizer {
 		init();
 	}
 	
-	public BloomSegmentTokenizer(AttributeSource source, Reader reader) {
-		super(source, reader);
-	}
-
 	public BloomSegmentTokenizer(AttributeFactory factory, Reader reader) {
 		super(factory, reader);
 	}

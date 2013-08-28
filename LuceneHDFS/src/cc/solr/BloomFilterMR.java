@@ -36,9 +36,7 @@ public class BloomFilterMR extends Configured implements Tool {
 
         
         @Override
-        public void map(Text key, Text value,
-                OutputCollector<Text, BloomFilter> output,
-                Reporter reporter) throws IOException {
+        public void map(Text key, Text value, OutputCollector<Text, BloomFilter> output, Reporter reporter) throws IOException {
             if (oc == null)
                 oc = output;
             if(key!=null && !key.toString().isEmpty()){

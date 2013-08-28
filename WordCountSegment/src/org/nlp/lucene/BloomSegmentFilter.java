@@ -52,7 +52,6 @@ public class BloomSegmentFilter extends TokenFilter {
 	}
 	
 	
-	@SuppressWarnings("static-access")
 	@Override
 	public boolean incrementToken() throws IOException {
 

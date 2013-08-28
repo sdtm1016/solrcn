@@ -7,7 +7,6 @@ import java.io.Reader;
 import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
-import org.apache.lucene.util.AttributeSource;
 import org.nlp.algo.Bloom;
 
 /**
@@ -52,18 +51,6 @@ public final class NGramTokenizer extends Tokenizer {
    */
   public NGramTokenizer(Reader input, int minGram, int maxGram) {
     super(input);
-    init(minGram, maxGram);
-  }
-
-  /**
-   * Creates NGramTokenizer with given min and max n-grams.
-   * @param source {@link AttributeSource} to use
-   * @param input {@link Reader} holding the input to be tokenized
-   * @param minGram the smallest n-gram to generate
-   * @param maxGram the largest n-gram to generate
-   */
-  public NGramTokenizer(AttributeSource source, Reader input, int minGram, int maxGram) {
-    super(source, input);
     init(minGram, maxGram);
   }
 
