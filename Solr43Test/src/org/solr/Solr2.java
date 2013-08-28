@@ -3,14 +3,10 @@ package org.solr;
 import java.io.File;
 import java.io.IOException;
 
-import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.CloudSolrServer;
 import org.apache.solr.client.solrj.request.AbstractUpdateRequest;
 import org.apache.solr.client.solrj.request.ContentStreamUpdateRequest;
-import org.apache.solr.client.solrj.response.QueryResponse;
-import org.apache.solr.common.util.ContentStream;
-import org.apache.solr.handler.extraction.ExtractingParams;
 
 /**
  * @author EDaniel
