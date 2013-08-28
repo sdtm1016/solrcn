@@ -20,17 +20,18 @@ import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.NoLockFactory;
 import org.apache.lucene.util.Version;
 
+import cc.solr.lucene.hdfsro.HdfsLockFactory;
 import cc.solr.lucene.store.hdfs.HdfsDirectory;
 
 public class LuceneHDFSIndexer {
 	final static Version matchVersion = Version.LUCENE_43;
 	public static void Index() throws IOException {
 		IndexWriter writer;
-		IndexWriterConfig iwc = new IndexWriterConfig(matchVersion,
-				new StandardAnalyzer(matchVersion));
+		IndexWriterConfig iwc = new IndexWriterConfig(matchVersion, new StandardAnalyzer(matchVersion));
 		iwc.setMergePolicy(NoMergePolicy.NO_COMPOUND_FILES);
 		iwc.setRAMBufferSizeMB(512);
-		HdfsDirectory directory = new HdfsDirectory("hdfs://master:9000/user/hadoop");
+		HdfsDirectory directory = new HdfsDirectory("hdfs://sc1:9000/user/hadoop/index2");
+		directory.setLockFactory(new HdfsLockFactory());
 				
 		try {
 			directory.setLockFactory(NoLockFactory.getNoLockFactory());
@@ -42,7 +43,7 @@ public class LuceneHDFSIndexer {
 			ArrayList<Document> docs = new ArrayList<Document>();
 			long count = 0;
 			long tagTime = System.currentTimeMillis();
-			for (int j = 0; j < 100; j++) {
+			for (int j = 0; j < 1; j++) {
 				for (int i = 0; i < 100000; i++) {
 					Document doc = new Document();
 					doc.add(new StringField("id", "id" + i, Field.Store.YES));
@@ -76,9 +77,10 @@ public class LuceneHDFSIndexer {
 
 	public static void main(String[] args) throws IOException {
 		Version matchVersion = Version.LUCENE_43;
-//		Index();
+		Index();
 		System.out.println("done....");
-		HdfsDirectory directory = new HdfsDirectory("hdfs://master:9000/user/hadoop/index");
+		HdfsDirectory directory = new HdfsDirectory("hdfs://sc1:9000/user/hadoop/index2");
+		directory.setLockFactory(new HdfsLockFactory());		
 		IndexReader reader;
 		try {
 			reader = DirectoryReader.open(directory);

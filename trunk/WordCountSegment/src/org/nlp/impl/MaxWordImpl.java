@@ -75,13 +75,14 @@ public class MaxWordImpl {
 		String key = "";
 		int offset = textLen;
 		int pos = 0;
+		
 		for (int i = offset; i > 0; i--) {
-
+			boolean found = false;
 			int end = Math.max(i - maxLen, 0);
 			for (int j = i - 2; j >= end; j--) {
 				key = text.substring(j, i);
 				if (dicMap.containsKey(key)) {
-					pos++;
+//					pos++;
 					TokendWords tws = new TokendWords(key, 1l,
 							new String[] { "word" }, i - j, pos, j);
 					result.add(tws);// 添加到列表
@@ -95,6 +96,8 @@ public class MaxWordImpl {
 						new String[] { "newWord" }, 1, pos, i - 1);
 			    result.add(tws);
 			}
+			if (found)
+				pos++;
 		}
 		Collections.reverse(result);
 		return result;
@@ -111,19 +114,23 @@ public class MaxWordImpl {
 		String key = "";
 		int offset = 0;
 		int pos = 0;
+		boolean found;
 		for (int i = offset; i < textLen; i++) {
+			found = false;
 //			int count = 0;
 			int end = Math.min(i + maxLen, textLen);
 			for (int j = i + 2; j <= end; j++) {
 				key = text.substring(i, j);
 				if (dicMap.containsKey(key)) {
-					pos++;
+					found = true;
+//					pos++;
 					TokendWords tws = new TokendWords(key, 1l,
 							new String[] { "word" }, j - i, pos, i);
 					result.add(tws);// 添加到列表
 					offset = j;
 				}
 			}
+			
 			if (i >= offset) {
 				pos++;
 				key = text.substring(i, i + 1);
@@ -132,6 +139,8 @@ public class MaxWordImpl {
 				result.add(tws);
 
 			}
+			if (found)
+				pos++;
 
 		}
 		return result;
@@ -148,7 +157,7 @@ public class MaxWordImpl {
 
 	public static void main(String[] args) {
 
-		String src = "新浪微博";
+		String src = "屌丝用的乒乓球拍卖完了";
 		MaxWordImpl mw = new MaxWordImpl();
 		MaxWordImpl.init("data/SogouLabDic.dic", true);
 

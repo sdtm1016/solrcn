@@ -3,8 +3,15 @@ import java.util.ArrayList;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
+import org.apache.lucene.codecs.PostingsFormat;
+import org.apache.lucene.codecs.bloom.BloomFilteringPostingsFormat;
+import org.apache.lucene.codecs.bloom.DefaultBloomFilterFactory;
+import org.apache.lucene.codecs.lucene41.Lucene41PostingsFormat;
+import org.apache.lucene.codecs.lucene42.Lucene42Codec;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
+import org.apache.lucene.document.LongField;
+import org.apache.lucene.document.NumericDocValuesField;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
@@ -16,7 +23,10 @@ import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.Sort;
+import org.apache.lucene.search.SortField;
+import org.apache.lucene.search.SortField.Type;
+import org.apache.lucene.search.TopFieldDocs;
 import org.apache.lucene.store.NoLockFactory;
 import org.apache.lucene.util.Version;
 
@@ -26,12 +36,19 @@ public class LuceneHDFSMarged {
 
 	public static void Index() throws IOException {
 		IndexWriter writer;
-		IndexWriterConfig iwc = new IndexWriterConfig(Version.LUCENE_43,
-				new StandardAnalyzer(Version.LUCENE_43));
+		IndexWriterConfig iwc = new IndexWriterConfig(Version.LUCENE_43, new StandardAnalyzer(Version.LUCENE_43));
 		iwc.setMergePolicy(NoMergePolicy.NO_COMPOUND_FILES);
 		iwc.setRAMBufferSizeMB(512);
-		HdfsDirectory directory = new HdfsDirectory("hdfs://master:9000/user/hadoop");
-				
+		iwc.setCodec(new Lucene42Codec() {
+			BloomFilteringPostingsFormat postingOptions = new BloomFilteringPostingsFormat(new Lucene41PostingsFormat(), new DefaultBloomFilterFactory());
+
+			@Override
+			public PostingsFormat getPostingsFormatForField(String field) {
+				return postingOptions;
+			}
+		});
+		HdfsDirectory directory = new HdfsDirectory("hdfs://sc1:9000/user/hadoop/index3");
+
 		try {
 			directory.setLockFactory(NoLockFactory.getNoLockFactory());
 		} catch (IOException e1) {
@@ -39,33 +56,33 @@ public class LuceneHDFSMarged {
 		}
 		try {
 			writer = new IndexWriter(directory, iwc);
-			ArrayList<Document> docs = new ArrayList<Document>();
 			long count = 0;
 			long tagTime = System.currentTimeMillis();
-			for (int j = 0; j < 100; j++) {
-				for (int i = 0; i < 100000; i++) {
+			ArrayList<Document> docs;
+			for (int j = 0; j < 10; j++) {
+				docs = new ArrayList<Document>();
+				for (int i = 0; i < 10000; i++) {
 					Document doc = new Document();
 					doc.add(new StringField("id", "id" + i, Field.Store.YES));
-					doc.add(new StringField("title", "title" + i,
-							Field.Store.YES));
+					doc.add(new StringField("title", "title" + i, Field.Store.YES));
+					doc.add(new LongField("time", System.currentTimeMillis() + i, Field.Store.YES));
+					doc.add(new NumericDocValuesField("time", System.currentTimeMillis()));
 					docs.add(doc);
 					count++;
 					// writer.addDocument(doc);
 				}
 				writer.addDocuments(docs);
-				docs.clear();
-				System.out
-						.format("add data [%s] ok... %s ms,%sper/sec\n",
-								count,
-								(System.currentTimeMillis() - tagTime),
-								(count * 1000 / (System.currentTimeMillis() - tagTime)));
+				if (count % 5000000 == 0)
+					writer.commit();
+				// docs.clear();
+				System.out.format("add data [%s] ok... %s ms,%sper/sec\n", count, (System.currentTimeMillis() - tagTime),
+						(count * 1000 / (System.currentTimeMillis() - tagTime)));
 			}
 
 			tagTime = System.currentTimeMillis();
 			System.out.println("start commit... ");
 			writer.commit();
-			System.out.println("commit ok... "
-					+ (System.currentTimeMillis() - tagTime));
+			System.out.println("commit ok... " + (System.currentTimeMillis() - tagTime));
 
 			writer.close();
 		} catch (IOException e) {
@@ -74,11 +91,9 @@ public class LuceneHDFSMarged {
 		}
 	}
 
-	public static void main(String[] args) throws IOException {
+	public static void search() throws IOException {
 		Version matchVersion = Version.LUCENE_43;
-//		Index();
-		System.out.println("done....");
-		HdfsDirectory directory = new HdfsDirectory("hdfs://master:9000/user/hadoop/index");
+		HdfsDirectory directory = new HdfsDirectory("hdfs://sc1:9000/user/hadoop/index3");
 		IndexReader reader;
 		try {
 			reader = DirectoryReader.open(directory);
@@ -88,19 +103,36 @@ public class LuceneHDFSMarged {
 			String keyword = "*:*";
 			QueryParser parser = new QueryParser(matchVersion, field, analyzer);
 			Query query = parser.parse(keyword);
-			TopDocs results = searcher.search(query, 5 * 10);
+			SortField sortField = new SortField("time", Type.LONG);
+			sortField.missingValue = Long.MAX_VALUE;
+			Sort sort = new Sort(sortField);
+
+			TopFieldDocs results = searcher.search(query, 5 * 10, sort);
+
+			// TopDocs results = searcher.search(query, 5 * 10);
 			ScoreDoc[] hits = results.scoreDocs;
 			int numTotalHits = results.totalHits;
 			System.out.println(numTotalHits + " total matching documents");
-			hits = searcher.search(query, numTotalHits).scoreDocs;
-			Document doc = searcher.doc(hits[hits.length - 1].doc);
-			String path = doc.get("id");
-			System.out.println(path);
+			for (int i = 1; i <= hits.length; i++) {
+				Document doc = searcher.doc(hits[hits.length - i].doc);
+				String path = doc.get("id");
+				String time = doc.get("time");
+				System.out.println(path + "\t" + time);
+			}
+
+			// hits = searcher.search(query, 200).scoreDocs;
+
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}
+	}
+
+	public static void main(String[] args) throws IOException {
+		Index();
+		System.out.println("done....");
+		search();
 
 	}
 }

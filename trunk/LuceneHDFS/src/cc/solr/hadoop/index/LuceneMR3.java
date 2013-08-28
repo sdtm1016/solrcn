@@ -80,7 +80,7 @@ public class LuceneMR3 extends Configured implements Tool {
 					continue;
 				doc.add(new TextField("data_" + i + "_cjk", str[i], Field.Store.YES));
 			}
-
+			
 			doc.add(new LongField("_version_", 1L, Field.Store.YES));
 
 			docs.add(doc);

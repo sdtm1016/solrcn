@@ -2,7 +2,6 @@ package org.nlp.lucene;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 

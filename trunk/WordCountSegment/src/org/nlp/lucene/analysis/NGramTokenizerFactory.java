@@ -4,7 +4,9 @@ import java.io.Reader;
 import java.util.Map;
 
 import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.util.TokenizerFactory;
+import org.apache.lucene.util.AttributeSource.AttributeFactory;
 
 /**
  * Factory for {@link NGramTokenizer}.
@@ -23,30 +25,24 @@ public class NGramTokenizerFactory extends TokenizerFactory {
 	private int minGramSize = 0;
 	private String modelFile;
 
-	/**
-	 * Initializes the n-gram min and max sizes and the side from which one
-	 * should start tokenizing.
-	 */
-	@Override
-	public void init(Map<String, String> args) {
-		super.init(args);
+	protected NGramTokenizerFactory(Map<String, String> args) {
+		super(args);
 		String maxArg = args.get("maxGramSize");
-		maxGramSize = (maxArg != null ? Integer.parseInt(maxArg)
-				: NGramTokenizer.DEFAULT_MAX_NGRAM_SIZE);
+		maxGramSize = (maxArg != null ? Integer.parseInt(maxArg) : NGramTokenizer.DEFAULT_MAX_NGRAM_SIZE);
 
 		String minArg = args.get("minGramSize");
-		minGramSize = (minArg != null ? Integer.parseInt(minArg)
-				: NGramTokenizer.DEFAULT_MIN_NGRAM_SIZE);
-		
-	    String modelArg = args.get("modelFile");
-	    modelFile = (modelArg != null ? modelArg
-	            : NGramTokenizer.DEFAULT_MODEL_FILE);
+		minGramSize = (minArg != null ? Integer.parseInt(minArg) : NGramTokenizer.DEFAULT_MIN_NGRAM_SIZE);
+
+		String modelArg = args.get("modelFile");
+		modelFile = (modelArg != null ? modelArg : NGramTokenizer.DEFAULT_MODEL_FILE);
 	}
 
 	/**
 	 * Creates the {@link TokenStream} of n-grams from the given {@link Reader}.
 	 */
-	public NGramTokenizer create(Reader input) {
+	@Override
+	public Tokenizer create(AttributeFactory factory, Reader input) {
+		// TODO Auto-generated method stub
 		return new NGramTokenizer(input, minGramSize, maxGramSize, modelFile);
 	}
 }
