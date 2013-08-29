@@ -1,13 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jdk"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/lucene_solr_branch_4x"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
+	<classpathentry kind="lib" path="lib/lucene-analyzers-common-4.3.1.jar" sourcepath="/solr-4.3.1-src"/>
+	<classpathentry kind="lib" path="lib/lucene-core-4.3.1.jar" sourcepath="/solr-4.3.1-src"/>
+	<classpathentry kind="lib" path="lib/lucene-queries-4.3.1.jar"/>
+	<classpathentry kind="lib" path="lib/lucene-queryparser-4.3.1.jar"/>
 	<classpathentry kind="lib" path="lib/guava-13.0.1.jar"/>
-	<classpathentry kind="lib" path="lib/hadoop/hadoop-core-1.1.2.jar" sourcepath="D:/Java/hadoop-1.1.2/src"/>
-	<classpathentry kind="lib" path="lib/hadoop/commons-logging-1.1.1.jar"/>
-	<classpathentry kind="lib" path="lib/hadoop/commons-cli-1.2.jar"/>
-	<classpathentry kind="lib" path="lib/hadoop/commons-lang-2.4.jar"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry kind="lib" path="lib/httpclient-4.2.3.jar"/>
+	<classpathentry kind="lib" path="lib/httpcore-4.2.2.jar"/>
+	<classpathentry kind="lib" path="lib/httpmime-4.2.3.jar"/>
+	<classpathentry kind="lib" path="lib/noggit-0.5.jar"/>
+	<classpathentry kind="lib" path="lib/wstx-asl-3.2.7.jar"/>
+	<classpathentry kind="lib" path="lib/zookeeper-3.4.5.jar"/>
+	<classpathentry kind="lib" path="lib/lucene-codecs-4.3.1.jar"/>
+	<classpathentry kind="lib" path="lib/solr-core-4.3.1.jar"/>
+	<classpathentry kind="lib" path="lib/solr-solrj-4.3.1.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/hadoop112"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
