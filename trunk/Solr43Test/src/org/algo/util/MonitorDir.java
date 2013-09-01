@@ -85,10 +85,16 @@ public class MonitorDir {
 		MonitorDir monitorDir = new MonitorDir();
 		
 		Path dir = Paths.get("z:/monitor");
-		try {
-			monitorDir.monitor(dir);
-		} catch (IOException | InterruptedException e) {
-			e.printStackTrace();
-		}
+		
+			try {
+				monitorDir.monitor(dir);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		
 	}
 }

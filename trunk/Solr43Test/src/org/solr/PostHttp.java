@@ -24,6 +24,9 @@ public class PostHttp {
 		
 		maps.add(new HashMap<String,String>(map));
 				
+		
+		System.out.println(maps.toString());
+		
 		Gson gson = new Gson();
 		String json = gson.toJson(maps);
 		
